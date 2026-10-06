@@ -32,6 +32,7 @@ export function LoginForm({ initialError }: { initialError?: string }) {
           autoCapitalize="none"
           spellCheck={false}
           required
+          defaultValue={state.email ?? ""}
           aria-invalid={error ? true : undefined}
           aria-describedby={error ? "login-error" : undefined}
           className="block h-12 w-full rounded-xl border border-stone-300 bg-white px-4 text-base outline-none focus:border-accent focus:ring-2 focus:ring-accent/30"

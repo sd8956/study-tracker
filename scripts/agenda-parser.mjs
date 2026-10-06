@@ -23,9 +23,9 @@ export function extractUrls(text) {
 
 /** @param {string} text */
 export function stripUrls(text) {
+  // Solo quita la URL y el espacio que la precede; el resto del texto queda intacto.
   return text
-    .replace(URL_RE, "")
-    .replace(/\s+([.,;:])/g, "$1")
+    .replace(/\s*https?:\/\/[^\s<>()]+/g, "")
     .replace(/\s{2,}/g, " ")
     .trim();
 }

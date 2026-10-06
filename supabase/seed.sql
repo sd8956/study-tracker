@@ -15,7 +15,7 @@ on conflict (id) do update set title = excluded.title, goal = excluded.goal, cer
 insert into public.sessions (id, position, block_id, day, hours, title, description, links) values
   (1, 1, 1, 1, 2, 'Get Started de Terraform', 'Tutorial oficial hasta el primer apply en la cuenta de laboratorio.', '[{"url":"https://developer.hashicorp.com/terraform/tutorials/aws-get-started","label":"Get Started de Terraform"}]'::jsonb),
   (2, 2, 1, 2, 2, 'Variables y outputs', 'Saca los valores fijos a variables.tf y outputs.tf. Añade una validación.', '[]'::jsonb),
-  (3, 3, 1, 3, 2, 'State local', 'terraform state list y show..gitignore de Terraform. El state no se sube.', '[]'::jsonb),
+  (3, 3, 1, 3, 2, 'State local', 'terraform state list y show. .gitignore de Terraform. El state no se sube.', '[]'::jsonb),
   (4, 4, 1, 4, 2, 'Módulos', 'Extrae un recurso a modules/ y llámalo desde la raíz.', '[{"url":"https://developer.hashicorp.com/terraform/tutorials/modules","label":"Módulos"}]'::jsonb),
   (5, 5, 1, 5, 3, 'Repo del proyecto', 'Crea secure-serverless: modules/, envs/lab, README con prerrequisitos, fmt y validate en verde.', '[]'::jsonb),
   (6, 6, 1, 6, 2, 'State remoto', 'Pasa el state a S3 con lock. Anota bucket y tabla. Tutorial Remote State de HashiCorp.', '[]'::jsonb),

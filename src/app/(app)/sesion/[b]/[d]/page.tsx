@@ -100,7 +100,7 @@ export default async function SesionPage({ params }: { params: Params }) {
         </section>
       ) : null}
 
-      <CompleteToggle key={`${session.id}-${mode}`} sessionId={session.id} mode={mode} />
+      <CompleteToggle key={session.id} sessionId={session.id} mode={mode} />
     </main>
   );
 }

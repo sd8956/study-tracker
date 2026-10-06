@@ -35,6 +35,7 @@ describe("parseAgenda (agenda real)", () => {
       links: [{ url: "https://developer.hashicorp.com/terraform/tutorials/aws-get-started", label: "Get Started de Terraform" }],
     });
     expect(day(1, 12).title).toBe("OIDC");
+    expect(day(1, 3).description).toBe("terraform state list y show. .gitignore de Terraform. El state no se sube.");
     expect(day(1, 13).links[0].url).toBe("https://www.checkov.io/1.Welcome/Quick%20Start.html");
     expect(day(1, 30)).toMatchObject({ hours: 3, title: "Cierre" });
     expect(day(2, 29)).toMatchObject({ hours: 3, title: "Examen SAP-C03", links: [] });
@@ -77,6 +78,7 @@ describe("helpers", () => {
     const t = "Lee esto. https://a.example/x, y https://b.example/y.";
     expect(extractUrls(t)).toEqual(["https://a.example/x", "https://b.example/y"]);
     expect(stripUrls("Media página. https://a.example/x")).toBe("Media página.");
+    expect(stripUrls("terraform state list y show. .gitignore de Terraform.")).toBe("terraform state list y show. .gitignore de Terraform.");
   });
 
   it("parseCertification", () => {
