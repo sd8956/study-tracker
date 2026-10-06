@@ -15,7 +15,7 @@ const session: Session = {
 describe("grok tutor", () => {
   it("prompt only has curriculum content and safe links", () => {
     const p = buildGrokPrompt(session, block);
-    expect(p).toContain("Bloque 1 (IaC) · Día 2: Variables y outputs");
+    expect(p).toContain("Bloque 1 (IaC) · Día 2 (2 h): Variables y outputs");
     expect(p).toContain("Parametrizar módulos.");
     expect(p).toContain("https://developer.hashicorp.com/terraform");
     expect(p).not.toContain("javascript:");

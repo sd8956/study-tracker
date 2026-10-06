@@ -8,7 +8,7 @@ const MAX_PROMPT = 1800;
 export function buildGrokPrompt(session: Session, block: Block | undefined): string {
   const lines = [
     "Actúa como mi tutor de estudio para la ruta Cloud Security Architect.",
-    `Bloque ${session.blockId}${block ? ` (${block.title})` : ""} · Día ${session.day}: ${session.title}`,
+    `Bloque ${session.blockId}${block ? ` (${block.title})` : ""} · Día ${session.day} (${session.hours} h): ${session.title}`,
   ];
   if (session.description) lines.push(`Objetivo de la sesión: ${session.description}`);
   const links = session.links.filter((l) => isSafeExternalUrl(l.url));
