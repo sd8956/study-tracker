@@ -12,7 +12,8 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "seed": "node scripts/parse-agenda.mjs"
+    "seed": "node scripts/parse-agenda.mjs",
+    "dev:fake-supabase": "node scripts/dev/fake-supabase.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.0",
