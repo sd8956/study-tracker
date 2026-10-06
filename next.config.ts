@@ -9,6 +9,11 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  // Fija la raíz del proyecto (evita que Turbopack tome un lockfile de un directorio padre).
+  turbopack: { root: __dirname },
+  async redirects() {
+    return [{ source: "/hoy", destination: "/", permanent: false }];
+  },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },
