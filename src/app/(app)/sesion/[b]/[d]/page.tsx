@@ -6,6 +6,8 @@ import { Chip, hoursLabel } from "@/components/ui";
 import { loadRoute } from "@/lib/data";
 import { domainOf, isCertificationDay, isSafeExternalUrl } from "@/lib/progress";
 import { CompleteToggle, type ToggleMode } from "./complete-toggle";
+import { AskGrok } from "./ask-grok";
+import { buildGrokPrompt, grokUrl } from "@/lib/grok";
 
 type Params = Promise<{ b: string; d: string }>;
 
@@ -34,6 +36,7 @@ export default async function SesionPage({ params }: { params: Params }) {
     status === "current" ? "current" : status === "future" ? "future" : route.canUndo(session.id) ? "done-last" : "done-locked";
   const links = session.links.filter((l) => isSafeExternalUrl(l.url));
   const current = route.current;
+  const grokPrompt = buildGrokPrompt(session, block);
 
   return (
     <main>
@@ -99,6 +102,8 @@ export default async function SesionPage({ params }: { params: Params }) {
           </ul>
         </section>
       ) : null}
+
+      <AskGrok href={grokUrl(grokPrompt)} prompt={grokPrompt} />
 
       <CompleteToggle key={session.id} sessionId={session.id} mode={mode} />
     </main>
