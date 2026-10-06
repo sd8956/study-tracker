@@ -89,6 +89,7 @@ describe("helpers", () => {
     expect(domainOf("nope")).toBe("");
     expect(isSafeExternalUrl("https://calculator.aws")).toBe(true);
     expect(isSafeExternalUrl("javascript:alert(1)")).toBe(false);
+    expect(isSafeExternalUrl("http://example.com")).toBe(false);
   });
 
   it("rpcErrorMessage", () => {
