@@ -13,6 +13,7 @@ import {
   completeSession,
   importData,
   logEnglish,
+  logWork,
   reviewCard,
   saveAnswer,
   saveNote,
@@ -44,6 +45,14 @@ export async function undoSessionAction(key: string): Promise<ActionResult> {
   if (!(await isLocal())) return NOT_LOCAL;
   if (!isKey(key)) return INVALID;
   const r = undoSession(getDb(), getPlan(), key);
+  if (r.ok) revalidatePath("/", "layout");
+  return r;
+}
+
+export async function logWorkAction(key: string, hours: number): Promise<ActionResult> {
+  if (!(await isLocal())) return NOT_LOCAL;
+  if (!isKey(key) || !Number.isInteger(hours)) return INVALID;
+  const r = logWork(getDb(), getPlan(), key, hours, new Date(), studyTz());
   if (r.ok) revalidatePath("/", "layout");
   return r;
 }

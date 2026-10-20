@@ -6,7 +6,7 @@ import { getDb } from "./db";
 import { getPlan } from "./plan";
 import { buildProgress } from "./progress";
 import { dateIn, projectSchedule, studyTz, todayIn } from "./schedule";
-import { getCompleted } from "./store";
+import { getCompleted, getWorkLog } from "./store";
 import { isTutorEnabled } from "./tutor";
 
 export const loadAppState = cache(async () => {
@@ -21,8 +21,9 @@ export const loadAppState = cache(async () => {
   const completedDates = new Map([...completedAt].map(([k, iso]) => [k, dateIn(iso, tz)]));
   const keys = plan.sessions.map((s) => s.key);
   const progress = buildProgress(keys, completedAt);
-  const schedule = projectSchedule(keys, completedDates, today);
-  return { plan, db, tz, now, today, completedDates, progress, schedule, tutorEnabled: isTutorEnabled() };
+  const workLog = getWorkLog(db);
+  const schedule = projectSchedule(plan.sessions, completedDates, workLog, today);
+  return { plan, db, tz, now, today, completedDates, progress, schedule, workLog, tutorEnabled: isTutorEnabled() };
 });
 
 export type AppState = Awaited<ReturnType<typeof loadAppState>>;

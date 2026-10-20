@@ -19,7 +19,7 @@ Branch: `feat/local-study-plan` · Delivery: ask-on-risk · Test runner: vitest 
 | ID | Specs | Route | Status | Commit |
 | --- | --- | --- | --- | --- |
 | T1 | S3 content format | inline | done | — |
-| T2 | S7, S2, S5, S6, S8, S4 app rewrite | delegated (parallel unit, writer W-app) | pending | — |
+| T2 | S7, S2, S5, S6, S8, S4 app rewrite | delegated (parallel unit, writer W-app) | done (typecheck, lint, 347 tests, build, smoke OK) | 2864e67 |
 | T3 | S3, S4 module 01 problem solving & algorithms | delegated (parallel content unit) | pending | — |
 | T4 | S3, S4 module 02 craft & practices | delegated (parallel content unit) | pending | — |
 | T5 | S3, S4 module 03 design & architecture | delegated (parallel content unit) | pending | — |
@@ -27,8 +27,8 @@ Branch: `feat/local-study-plan` · Delivery: ask-on-risk · Test runner: vitest 
 | T7 | S3, S4 module 05 system design | delegated (parallel content unit) | pending | — |
 | T8 | S3, S4 module 06 microservices | delegated (parallel content unit) | pending | — |
 | T9 | S3, S4 module 07 AI engineering | delegated (parallel content unit) | pending | — |
-| T10 | S1, S4 modules 08–17 DataCamp + Scrimba course sessions | delegated (after research inventory) | pending | — |
-| T11 | all | independent verifier (Risk items 2, 5: auth removal, deps) | pending | — |
+| T10 | S1, S4 modules 08–17 DataCamp + Scrimba course sessions | delegated (2 writers: DataCamp 08–16, Scrimba 17) | in progress | — |
+| T11 | all | independent verifier (Risk items 2, 5: auth removal, deps) | in progress on 2864e67 | — |
 
 Route evidence: T2–T9 are independent units with disjoint edit surfaces (`src/**` and so on vs `content/modules/NN-*/**`). Each needs well over 100 lines, so the Writer trigger (a) parallelism holds.
 
@@ -38,3 +38,6 @@ Route evidence: T2–T9 are independent units with disjoint edit surfaces (`src/
 - **L2 (2026-10-20, user, verbatim):** "entiendo que supabase ya esta pero esto es local y creo que podriamos usar qslite y ya. De acuerdo los libros tienen relacion entre si algunos no los voy a leer todos necesito extraer de estos los temas agruparlos y que crees los conceptos, textos, resumenes a estudiar no quiero leer el libro como tal. me gusta la tecnica de estudio que propones podriamos integrar un chat para evaluar mis respuestas incluso tengo acceso a un modelo de voz a texto, esto lo tengo con NAN builders (si no lo conoces buscalo)"
 - **L3 (analysis):** 15 PDFs, about 8,000 pages. Outlines were extracted with pdftohtml into the scratchpad; no book was read in full. Selected scope is about 180 sessions for books + repos (about 30 weeks at 6 sessions/week). Modules: 01 problem solving & algorithms (Think Like a Programmer, Grokking Algorithms, CtCI); 02 craft (Pragmatic Programmer, Clean Code, Gentleman book, Software Engineering at Google); 03 design & architecture (GoF, Clean Architecture, DDD, Systems Analysis & Design); 04 DDIA; 05 system design (SDI vol 2 + primer + karan); 06 microservices (Newman + Hands-On Microservices with Kubernetes); 07 AI Engineering (Huyen). Exercises in TypeScript (assumption: the user writes TS; Python comes later in DataCamp).
 - **L4 (decision):** No login. The app is local-only, bound to 127.0.0.1. The Supabase project and its data are left untouched (not deleted).
+- **L5 (progress):** Research inventory: DataCamp 216 h listed, about 149 h after removing duplicates; Scrimba 108 h. T2 landed in 2864e67. RDD is on; assess returned review_due high_risk, but it is unassessable while content writers keep adding untracked files. Native review is deferred until the content is committed. Known gaps: an unknown session key returns 200 with "No encontrado"; a 3 h session can land on a weekday.
+- **L6 (verification of 2864e67):** Security (item 2) PASS: foreign Origin/Host → 403, cross-origin server actions rejected, key never reaches the client, grade uses the server's question, transcribe limits. Deps (item 5) PASS. Agenda regression identical (6 blocks / 139). S4–S8 PASS. S2 PARTIAL. Blocker: `projectSchedule` puts one session per study day whatever its hours, so 51 of 63 3 h sessions land on weekdays. Two advisories were fixed in c83ba26 (RED → GREEN): a same-origin port check, and import now requires every table so a partial backup can't wipe the DB. Open: S2 hour-sizing (product decision asked to the user); an unknown session returns 200.
+- **L7 (2026-10-20, user, verbatim):** "A, repartir por horas". Implemented hour-budget scheduling: a work_log table (migration v2, backup v2), `logWork` for partial hours on the current session, completion logs the remainder, and undo removes only the auto row. Today shows each session's hours for today and "Sigue el …". Tests RED → GREEN; 489 tests, build and smoke all pass. All 17 content modules are committed. Pending: the native RDD review of the branch, plus the advisory that an unknown session returns 200.

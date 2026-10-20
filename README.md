@@ -9,7 +9,8 @@ Plan de estudio personal que corre **en tu equipo**. Abres la web y ves qué toc
 
 La ruta va en orden: libros y repos → DataCamp → Scrimba → ruta **Cloud Security** (6 bloques,
 139 sesiones, al final). Lunes a viernes 2 h de ruta, sábado 3 h, domingo descanso. Las sesiones
-son secuenciales: si un día no estudias, la siguiente espera.
+son secuenciales y se reparten por horas: una sesión de 3 h puede ocupar dos días de semana
+("Avancé X h hoy" en Hoy) y la siguiente empieza en las horas que quedan. Si un día no estudias, la siguiente espera.
 
 - Next.js 16 (App Router, TypeScript) + Tailwind 4
 - SQLite con `node:sqlite` (sin servicios externos, sin login)

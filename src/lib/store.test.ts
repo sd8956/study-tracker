@@ -11,9 +11,11 @@ import {
   getCompleted,
   getDueCards,
   getEnglishLog,
+  getWorkLog,
   importData,
   listCards,
   logEnglish,
+  logWork,
   reviewCard,
   saveAnswer,
   undoSession,
@@ -139,5 +141,52 @@ describe("export / import", () => {
     delete partial.progress;
     expect(importData(db, { ...dump, tables: partial })).toMatchObject({ ok: false });
     expect(exportData(db, NOW)).toEqual(dump);
+  });
+});
+
+describe("work log (hour budget)", () => {
+  const TUE_NOW = new Date("2026-10-20T20:00:00Z");
+
+  it("completing a session logs its remaining hours for today", () => {
+    completeSession(db, plan, K[0], NOW, TZ);
+    expect(getWorkLog(db)).toEqual([{ sessionKey: K[0], date: "2026-10-19", hours: 2, auto: true }]);
+  });
+
+  it("partial work is allowed only on the current session and below its remaining hours", () => {
+    completeSession(db, plan, K[0], NOW, TZ);
+    // K[1] is the 3 h project.
+    expect(logWork(db, plan, K[2], 1, NOW, TZ)).toMatchObject({ ok: false });
+    expect(logWork(db, plan, K[1], 0, NOW, TZ)).toMatchObject({ ok: false });
+    expect(logWork(db, plan, K[1], 3, NOW, TZ)).toMatchObject({ ok: false });
+    expect(logWork(db, plan, K[1], 1, NOW, TZ)).toEqual({ ok: true });
+    expect(logWork(db, plan, K[1], 1, NOW, TZ)).toEqual({ ok: true });
+    expect(logWork(db, plan, K[1], 1, NOW, TZ)).toMatchObject({ ok: false });
+    expect(getWorkLog(db).filter((w) => w.sessionKey === K[1])).toEqual([
+      { sessionKey: K[1], date: "2026-10-19", hours: 2, auto: false },
+    ]);
+  });
+
+  it("completing after partial work logs only the remainder; undo keeps the partial work", () => {
+    completeSession(db, plan, K[0], NOW, TZ);
+    logWork(db, plan, K[1], 2, NOW, TZ);
+    expect(completeSession(db, plan, K[1], TUE_NOW, TZ)).toEqual({ ok: true });
+    expect(getWorkLog(db).filter((w) => w.sessionKey === K[1])).toEqual([
+      { sessionKey: K[1], date: "2026-10-19", hours: 2, auto: false },
+      { sessionKey: K[1], date: "2026-10-20", hours: 1, auto: true },
+    ]);
+    expect(undoSession(db, plan, K[1])).toEqual({ ok: true });
+    expect(getWorkLog(db).filter((w) => w.sessionKey === K[1])).toEqual([
+      { sessionKey: K[1], date: "2026-10-19", hours: 2, auto: false },
+    ]);
+  });
+
+  it("is part of the backup", () => {
+    completeSession(db, plan, K[0], NOW, TZ);
+    logWork(db, plan, K[1], 1, NOW, TZ);
+    const dump = exportData(db, NOW);
+    expect(dump.tables.work_log).toHaveLength(2);
+    const other = openDatabase(join(mkdtempSync(join(tmpdir(), "study-store-")), "study.db"));
+    expect(importData(other, dump)).toEqual({ ok: true });
+    expect(getWorkLog(other)).toEqual(getWorkLog(db));
   });
 });

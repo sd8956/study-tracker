@@ -8,7 +8,7 @@ import { addDays, todayIn } from "./schedule";
 import type { GradeKind } from "./tutor-core";
 
 export type Result = { ok: true } | { ok: false; error: string };
-type PlanLike = { sessions: Pick<PlanSession, "key" | "kind" | "review">[] };
+type PlanLike = { sessions: Pick<PlanSession, "key" | "kind" | "hours" | "review">[] };
 
 const plain = <T>(row: unknown): T => ({ ...(row as object) }) as T;
 
@@ -32,6 +32,14 @@ export function completeSession(db: DatabaseSync, plan: PlanLike, key: string, n
     if (!current || current.key !== key) return { ok: false, error: "Solo puedes marcar la sesión actual." };
 
     db.prepare("INSERT INTO progress (session_key, completed_at) VALUES (?, ?)").run(key, now.toISOString());
+    const remainder = current.hours - workedHours(db, key);
+    if (remainder > 0) {
+      db.prepare("INSERT INTO work_log (session_key, date, hours, auto) VALUES (?, ?, ?, 1)").run(
+        key,
+        todayIn(tz, now),
+        remainder,
+      );
+    }
     if ((current.kind === "lesson" || current.kind === "course") && current.review.length > 0) {
       const due = addDays(todayIn(tz, now), 1);
       const insert = db.prepare(
@@ -50,9 +58,49 @@ export function undoSession(db: DatabaseSync, plan: PlanLike, key: string): Resu
     const last = [...plan.sessions].reverse().find((s) => completed.has(s.key));
     if (!last || last.key !== key) return { ok: false, error: "Solo puedes deshacer la última sesión completada." };
     db.prepare("DELETE FROM progress WHERE session_key = ?").run(key);
+    db.prepare("DELETE FROM work_log WHERE session_key = ? AND auto = 1").run(key);
     db.prepare(
       "DELETE FROM cards WHERE session_key = ? AND card_key NOT IN (SELECT card_key FROM card_reviews)",
     ).run(key);
+    return { ok: true };
+  });
+}
+
+// ---------- work log (hour budget) ----------
+
+export type WorkLogRow = { sessionKey: string; date: string; hours: number; auto: boolean };
+
+export function getWorkLog(db: DatabaseSync): WorkLogRow[] {
+  const rows = db.prepare("SELECT session_key, date, hours, auto FROM work_log ORDER BY date, auto, session_key").all() as {
+    session_key: string;
+    date: string;
+    hours: number;
+    auto: number;
+  }[];
+  return rows.map((r) => ({ sessionKey: r.session_key, date: r.date, hours: r.hours, auto: r.auto === 1 }));
+}
+
+function workedHours(db: DatabaseSync, key: string): number {
+  const row = db.prepare("SELECT COALESCE(SUM(hours), 0) AS h FROM work_log WHERE session_key = ? AND auto = 0").get(key) as {
+    h: number;
+  };
+  return row.h;
+}
+
+/** Logs partial hours on the current session; the total must stay below its hours (finishing = completing it). */
+export function logWork(db: DatabaseSync, plan: PlanLike, key: string, hours: number, now: Date, tz: string): Result {
+  return transaction(db, (): Result => {
+    const completed = getCompleted(db);
+    const current = plan.sessions.find((s) => !completed.has(s.key));
+    if (!current || current.key !== key) return { ok: false, error: "Solo puedes registrar horas de la sesión actual." };
+    const left = current.hours - workedHours(db, key);
+    if (!Number.isInteger(hours) || hours < 1 || hours >= left) {
+      return { ok: false, error: "Si ya terminaste la sesión, márcala como hecha." };
+    }
+    db.prepare(
+      `INSERT INTO work_log (session_key, date, hours, auto) VALUES (?, ?, ?, 0)
+       ON CONFLICT (session_key, date, auto) DO UPDATE SET hours = hours + excluded.hours`,
+    ).run(key, todayIn(tz, now), hours);
     return { ok: true };
   });
 }
@@ -238,6 +286,7 @@ const TABLES: Record<string, Record<string, ColType>> = {
   },
   notes: { session_key: "text", text: "text", updated_at: "text" },
   chat_messages: { id: "int", session_key: "text", role: "text", content: "text", created_at: "text" },
+  work_log: { session_key: "text", date: "text", hours: "int", auto: "int" },
 };
 const ORDER_BY: Record<string, string> = {
   settings: "key",
@@ -248,10 +297,11 @@ const ORDER_BY: Record<string, string> = {
   answers: "id",
   notes: "session_key",
   chat_messages: "id",
+  work_log: "date, auto, session_key",
 };
 
 export const BACKUP_APP = "study-tracker";
-export const BACKUP_VERSION = 1;
+export const BACKUP_VERSION = 2;
 export type Backup = {
   app: typeof BACKUP_APP;
   version: typeof BACKUP_VERSION;

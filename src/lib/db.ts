@@ -61,6 +61,16 @@ const MIGRATIONS: string[] = [
   );
   CREATE INDEX chat_session ON chat_messages (session_key, id);
   `,
+  // Hours studied per session and day (hour-budget schedule). auto = 1: remainder logged on completion.
+  `
+  CREATE TABLE work_log (
+    session_key TEXT NOT NULL,
+    date TEXT NOT NULL CHECK (date GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]'),
+    hours INTEGER NOT NULL CHECK (hours BETWEEN 1 AND 3),
+    auto INTEGER NOT NULL CHECK (auto IN (0, 1)),
+    PRIMARY KEY (session_key, date, auto)
+  );
+  `,
 ];
 
 export const SCHEMA_VERSION = MIGRATIONS.length;

@@ -51,27 +51,55 @@ export function nextStudyDay(date: string): string {
   return d;
 }
 
-export type Planned = { date: string; status: "done" | "current" | "upcoming" };
+export type Segment = { date: string; hours: number };
+/** `date` is the completion date (done) or the first planned day; `segments` say how many hours fall on each day. */
+export type Planned = { date: string; status: "done" | "current" | "upcoming"; segments: Segment[] };
+export type ScheduleItem = { key: string; hours: number };
+export type WorkEntry = { sessionKey: string; date: string; hours: number };
 
 /**
- * Projects a date for every session, in plan order. Completed sessions keep their completion date.
- * The current session (first not completed) is planned for today, or for the next study day when
- * today is Sunday or a session was already completed today; each later session takes the next study day.
+ * Projects the pending sessions onto the calendar by hours, in plan order: each study day has a budget
+ * (Mon–Fri 2 h, Sat 3 h) and a session takes as many days as its hours need, so a 3 h session can span
+ * two weekdays and the next session starts in the hours left. Hours already worked today use up today's
+ * budget; partial work on a session shortens what is left of it. Completed sessions keep their date.
  */
-export function projectSchedule(keys: string[], completed: Map<string, string>, today: string): Map<string, Planned> {
+export function projectSchedule(
+  items: ScheduleItem[],
+  completed: Map<string, string>,
+  work: WorkEntry[],
+  today: string,
+): Map<string, Planned> {
   const out = new Map<string, Planned>();
-  const doneToday = [...completed.values()].includes(today);
-  let next = !isStudyDay(today) || doneToday ? nextStudyDay(today) : today;
+  const usedToday = work.filter((w) => w.date === today).reduce((sum, w) => sum + w.hours, 0);
+  const worked = new Map<string, number>();
+  for (const w of work) worked.set(w.sessionKey, (worked.get(w.sessionKey) ?? 0) + w.hours);
+
+  let day = today;
+  let left = dayBudget(today) - usedToday;
+  const advance = () => {
+    day = nextStudyDay(day);
+    left = dayBudget(day);
+  };
+  if (left <= 0) advance();
+
   let first = true;
-  for (const key of keys) {
+  for (const { key, hours } of items) {
     const doneDate = completed.get(key);
     if (doneDate !== undefined) {
-      out.set(key, { date: doneDate, status: "done" });
+      out.set(key, { date: doneDate, status: "done", segments: [] });
       continue;
     }
-    out.set(key, { date: next, status: first ? "current" : "upcoming" });
+    let need = Math.max(hours - (worked.get(key) ?? 0), 0);
+    const segments: Segment[] = [];
+    while (need > 0) {
+      if (left <= 0) advance();
+      const take = Math.min(need, left);
+      segments.push({ date: day, hours: take });
+      need -= take;
+      left -= take;
+    }
+    out.set(key, { date: segments[0]?.date ?? day, status: first ? "current" : "upcoming", segments });
     first = false;
-    next = nextStudyDay(next);
   }
   return out;
 }

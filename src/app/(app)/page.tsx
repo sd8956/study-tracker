@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { EnglishTimer } from "@/components/english-timer";
+import { WorkButton } from "@/components/work-button";
 import { CheckIcon } from "@/components/icons";
 import { Chip, KindBadge, ProgressBar, buttonPrimary } from "@/components/ui";
 import { loadAppState } from "@/lib/data";
@@ -38,6 +39,16 @@ export default async function HoyPage() {
   const english = getEnglishLog(db).get(today) ?? null;
   const due = countDueCards(db, today);
   const doneToday = plan.sessions.filter((s) => state.completedDates.get(s.key) === today);
+  // Pending sessions with hours planned today (hour budget: a session may span days).
+  const plannedToday = plan.sessions
+    .map((s) => ({ session: s, planned: schedule.get(s.key) }))
+    .filter(({ planned }) => planned && planned.status !== "done" && planned.segments.some((g) => g.date === today))
+    .map(({ session, planned }) => {
+      const segments = planned!.segments;
+      const todayHours = segments.find((g) => g.date === today)!.hours;
+      const later = segments.filter((g) => g.date > today);
+      return { session, todayHours, continuesOn: later[0]?.date ?? null, current: planned!.status === "current" };
+    });
   const current = progress.currentKey ? plan.byKey.get(progress.currentKey) : undefined;
   const budget = dayBudget(today);
 
@@ -76,12 +87,19 @@ export default async function HoyPage() {
         {doneToday.map((s) => (
           <SessionCard key={s.key} session={s} moduleTitle={plan.moduleById.get(s.moduleId)?.title ?? ""} done />
         ))}
-        {current && doneToday.length === 0 ? (
-          <SessionCard session={current} moduleTitle={plan.moduleById.get(current.moduleId)?.title ?? ""} />
-        ) : null}
-        {current && doneToday.length > 0 ? (
+        {plannedToday.map(({ session, todayHours, continuesOn, current: isCurrent }) => (
+          <SessionCard
+            key={session.key}
+            session={session}
+            moduleTitle={plan.moduleById.get(session.moduleId)?.title ?? ""}
+            todayHours={todayHours}
+            continuesOn={continuesOn}
+            canLogWork={isCurrent && continuesOn !== null}
+          />
+        ))}
+        {current && plannedToday.length === 0 ? (
           <p className="px-1 text-sm text-stone-600">
-            Siguiente: {current.title} · {longDate(schedule.get(current.key)?.date ?? today)}
+            Por hoy terminaste. Siguiente: {current.title} · {longDate(schedule.get(current.key)?.date ?? today)}
           </p>
         ) : null}
         {!current && plan.sessions.length > 0 ? (
@@ -116,14 +134,28 @@ function Header({ state }: { state: Awaited<ReturnType<typeof loadAppState>> }) 
   );
 }
 
-function SessionCard({ session, moduleTitle, done = false }: { session: PlanSession; moduleTitle: string; done?: boolean }) {
+function SessionCard({
+  session,
+  moduleTitle,
+  done = false,
+  todayHours,
+  continuesOn = null,
+  canLogWork = false,
+}: {
+  session: PlanSession;
+  moduleTitle: string;
+  done?: boolean;
+  todayHours?: number;
+  continuesOn?: string | null;
+  canLogWork?: boolean;
+}) {
   const objective = session.sections.objetivo ?? session.sections.description ?? "";
   return (
     <article className={`rounded-xl border p-5 ${done ? "border-accent/30 bg-accent-soft" : "border-stone-200 bg-white"}`}>
       <p className="text-sm text-stone-600">{moduleTitle}</p>
       <div className="mt-2 flex flex-wrap gap-2">
         <KindBadge kind={session.kind} />
-        <Chip>{session.hours} h</Chip>
+        <Chip>{todayHours !== undefined && todayHours !== session.hours ? `hoy ${todayHours} h de ${session.hours} h` : `${session.hours} h`}</Chip>
         {done ? (
           <Chip tone="accent">
             <CheckIcon className="mr-1 size-3.5" /> Hecha
@@ -132,6 +164,7 @@ function SessionCard({ session, moduleTitle, done = false }: { session: PlanSess
       </div>
       <h3 className="mt-3 text-xl font-semibold leading-snug">{session.title}</h3>
       {objective ? <p className="mt-1 line-clamp-3 text-[15px] leading-relaxed text-stone-600">{objective}</p> : null}
+      {continuesOn ? <p className="mt-2 text-sm text-stone-600">Sigue el {longDate(continuesOn)}.</p> : null}
       <Link
         href={sessionHref(session.key)}
         className={
@@ -142,6 +175,7 @@ function SessionCard({ session, moduleTitle, done = false }: { session: PlanSess
       >
         {done ? "Ver sesión" : "Abrir sesión"}
       </Link>
+      {canLogWork && todayHours ? <WorkButton sessionKey={session.key} hours={todayHours} /> : null}
     </article>
   );
 }

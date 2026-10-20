@@ -36,37 +36,64 @@ describe("calendar helpers", () => {
   });
 });
 
-describe("projectSchedule", () => {
-  const keys = ["a", "b", "c", "d", "e", "f", "g"];
+describe("projectSchedule (hour budget: Mon–Fri 2 h, Sat 3 h, Sun rest)", () => {
+  const TUE = "2026-10-20";
+  const WED = "2026-10-21";
+  const THU = "2026-10-22";
+  const NEXT_MON = "2026-10-26";
+  const two = (...keys: string[]) => keys.map((key) => ({ key, hours: 2 }));
 
-  it("plans the current session for today and one per study day after it", () => {
-    const p = projectSchedule(keys, new Map(), MON);
-    expect(keys.map((k) => p.get(k)?.date)).toEqual([
-      "2026-10-19", "2026-10-20", "2026-10-21", "2026-10-22", "2026-10-23", "2026-10-24", "2026-10-26",
+  it("fills each day's budget in order; Saturday's third hour starts the next session", () => {
+    const items = two("a", "b", "c", "d", "e", "f", "g");
+    const p = projectSchedule(items, new Map(), [], MON);
+    expect(items.map((i) => p.get(i.key)?.date)).toEqual([MON, TUE, WED, THU, "2026-10-23", SAT, SAT]);
+    expect(p.get("a")).toEqual({ date: MON, status: "current", segments: [{ date: MON, hours: 2 }] });
+    expect(p.get("g")?.segments).toEqual([
+      { date: SAT, hours: 1 },
+      { date: NEXT_MON, hours: 1 },
     ]);
-    expect(p.get("a")?.status).toBe("current");
     expect(p.get("b")?.status).toBe("upcoming");
   });
 
-  it("on Sunday the current session is planned for Monday", () => {
-    const p = projectSchedule(keys, new Map(), SUN);
-    expect(p.get("a")).toEqual({ date: "2026-10-26", status: "current" });
+  it("a 3 h session on a weekday spans two days and the next one fills the rest", () => {
+    const items = [{ key: "a", hours: 2 }, { key: "b", hours: 3 }, { key: "c", hours: 2 }];
+    const p = projectSchedule(items, new Map(), [], MON);
+    expect(p.get("b")?.segments).toEqual([
+      { date: TUE, hours: 2 },
+      { date: WED, hours: 1 },
+    ]);
+    expect(p.get("c")?.segments).toEqual([
+      { date: WED, hours: 1 },
+      { date: THU, hours: 1 },
+    ]);
   });
 
-  it("completed sessions keep their completion date; after finishing today the next waits for the next study day", () => {
-    const done = new Map([
-      ["a", "2026-10-17"],
-      ["b", MON],
-    ]);
-    const p = projectSchedule(keys, done, MON);
-    expect(p.get("a")).toEqual({ date: "2026-10-17", status: "done" });
-    expect(p.get("b")).toEqual({ date: MON, status: "done" });
-    expect(p.get("c")).toEqual({ date: "2026-10-20", status: "current" });
-    expect(p.get("d")?.date).toBe("2026-10-21");
+  it("on Sunday the current session starts on Monday", () => {
+    const p = projectSchedule(two("a"), new Map(), [], SUN);
+    expect(p.get("a")).toEqual({ date: NEXT_MON, status: "current", segments: [{ date: NEXT_MON, hours: 2 }] });
+  });
+
+  it("hours worked today use up today's budget", () => {
+    const items = [...two("a"), { key: "b", hours: 3 }, ...two("c")];
+    const done = new Map([["a", MON]]);
+    const p = projectSchedule(items, done, [{ sessionKey: "a", date: MON, hours: 2 }], MON);
+    expect(p.get("a")).toEqual({ date: MON, status: "done", segments: [] });
+    expect(p.get("b")).toEqual({ date: TUE, status: "current", segments: [{ date: TUE, hours: 2 }, { date: WED, hours: 1 }] });
+  });
+
+  it("partial work on the current session shortens what is left of it", () => {
+    const items = [{ key: "b", hours: 3 }, ...two("c")];
+    const today = projectSchedule(items, new Map(), [{ sessionKey: "b", date: MON, hours: 2 }], MON);
+    expect(today.get("b")?.segments).toEqual([{ date: TUE, hours: 1 }]);
+    expect(today.get("c")?.segments).toEqual([{ date: TUE, hours: 1 }, { date: WED, hours: 1 }]);
+
+    const nextDay = projectSchedule(items, new Map(), [{ sessionKey: "b", date: MON, hours: 2 }], TUE);
+    expect(nextDay.get("b")?.segments).toEqual([{ date: TUE, hours: 1 }]);
+    expect(nextDay.get("c")?.segments).toEqual([{ date: TUE, hours: 1 }, { date: WED, hours: 1 }]);
   });
 
   it("missed days do not skip sessions: the current one moves to today", () => {
-    const p = projectSchedule(keys, new Map([["a", "2026-10-01"]]), "2026-10-22");
-    expect(p.get("b")).toEqual({ date: "2026-10-22", status: "current" });
+    const p = projectSchedule(two("a", "b"), new Map([["a", "2026-10-01"]]), [], THU);
+    expect(p.get("b")).toEqual({ date: THU, status: "current", segments: [{ date: THU, hours: 2 }] });
   });
 });
