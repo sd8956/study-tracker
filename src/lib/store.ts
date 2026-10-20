@@ -291,7 +291,7 @@ export function importData(db: DatabaseSync, input: unknown): Result {
   }
   for (const [name, cols] of Object.entries(TABLES)) {
     const rows = (data.tables as Record<string, unknown>)[name];
-    if (rows === undefined) continue;
+    // Every table is required: a missing one would be wiped on import.
     if (!Array.isArray(rows)) return invalid;
     for (const row of rows) {
       if (!row || typeof row !== "object") return invalid;

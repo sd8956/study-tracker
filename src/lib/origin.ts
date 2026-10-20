@@ -14,12 +14,14 @@ export function isLocalHost(host: string | null): boolean {
 }
 
 export function isLocalRequest(headers: Headers): boolean {
-  if (!isLocalHost(headers.get("host"))) return false;
+  const host = headers.get("host");
+  if (!host || !isLocalHost(host)) return false;
   const origin = headers.get("origin");
   if (origin === null) return true;
   try {
     const u = new URL(origin);
-    return (u.protocol === "http:" || u.protocol === "https:") && LOCAL_HOSTNAMES.has(u.hostname);
+    // Same origin only: another local server (other port) must not drive this app.
+    return (u.protocol === "http:" || u.protocol === "https:") && u.host === host.trim().toLowerCase();
   } catch {
     return false;
   }

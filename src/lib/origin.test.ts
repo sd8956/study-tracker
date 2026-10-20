@@ -16,6 +16,12 @@ describe("isLocalRequest", () => {
     expect(isLocalRequest(h({ host: "127.0.0.1:3000", origin: "null" }))).toBe(false);
   });
 
+  it("rejects a loopback origin served from another port or host name", () => {
+    expect(isLocalRequest(h({ host: "127.0.0.1:3000", origin: "http://localhost:8080" }))).toBe(false);
+    expect(isLocalRequest(h({ host: "127.0.0.1:3000", origin: "http://127.0.0.1:8080" }))).toBe(false);
+    expect(isLocalRequest(h({ host: "127.0.0.1:3000", origin: "http://localhost:3000" }))).toBe(false);
+  });
+
   it("rejects a foreign Host (DNS rebinding) and a missing Host", () => {
     expect(isLocalRequest(h({ host: "evil.example" }))).toBe(false);
     expect(isLocalRequest(h({ host: "localhost.evil.example:3000" }))).toBe(false);

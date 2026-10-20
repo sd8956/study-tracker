@@ -130,4 +130,14 @@ describe("export / import", () => {
     });
     expect(exportData(other, NOW)).toEqual(dump);
   });
+
+  it("rejects a backup with missing tables instead of wiping them", () => {
+    completeSession(db, plan, K[0], NOW, TZ);
+    const dump = exportData(db, NOW);
+    expect(importData(db, { ...dump, tables: {} })).toMatchObject({ ok: false });
+    const partial: Record<string, unknown> = { ...dump.tables };
+    delete partial.progress;
+    expect(importData(db, { ...dump, tables: partial })).toMatchObject({ ok: false });
+    expect(exportData(db, NOW)).toEqual(dump);
+  });
 });
