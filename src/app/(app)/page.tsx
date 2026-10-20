@@ -1,106 +1,147 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { Chip, ProgressBar } from "@/components/ui";
-import { loadRoute } from "@/lib/data";
-import { isCertificationDay } from "@/lib/progress";
-import { DoneBanner } from "./done-banner";
+import { EnglishTimer } from "@/components/english-timer";
+import { CheckIcon } from "@/components/icons";
+import { Chip, KindBadge, ProgressBar, buttonPrimary } from "@/components/ui";
+import { loadAppState } from "@/lib/data";
+import type { PlanSession } from "@/lib/plan";
+import { sessionHref } from "@/lib/routes";
+import { dayBudget, longDate, weekday } from "@/lib/schedule";
+import { countDueCards, getEnglishLog } from "@/lib/store";
 
 export const metadata: Metadata = { title: "Hoy · Study Tracker" };
 
-export default async function HoyPage({
-  searchParams,
-}: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
-}) {
-  const route = await loadRoute();
-  const { hecho } = await searchParams;
+export default async function HoyPage() {
+  const state = await loadAppState();
+  const { plan, progress, schedule, today, db } = state;
 
-  if (route.total === 0) {
+  if (weekday(today) === 0) {
+    const next = progress.currentKey ? plan.byKey.get(progress.currentKey) : undefined;
     return (
-      <main>
-        <h1 className="text-xl font-semibold">Sin sesiones.</h1>
-        <p className="mt-1 text-[15px] text-stone-600">La agenda no está cargada en la base de datos (falta el seed).</p>
+      <main className="space-y-6">
+        <Header state={state} />
+        <section aria-labelledby="descanso" className="rounded-xl border border-stone-200 bg-white p-5">
+          <h1 id="descanso" className="text-xl font-semibold">
+            Hoy descansas.
+          </h1>
+          <p className="mt-1 text-[15px] text-stone-600">Domingo sin inglés ni ruta. Mañana sigues donde quedaste.</p>
+          {next ? (
+            <Link href={sessionHref(next.key)} className="mt-4 inline-block text-[15px] font-medium text-accent-strong underline underline-offset-4">
+              Ver la sesión de mañana: {next.title}
+            </Link>
+          ) : null}
+        </section>
       </main>
     );
   }
 
-  const doneId = typeof hecho === "string" && /^\d+$/.test(hecho) ? Number(hecho) : null;
-  const justDone = doneId !== null && route.statusOf(doneId) === "done" ? route.sessions.find((s) => s.id === doneId) : undefined;
-
-  const { current, next } = route;
-  const block = current ? route.blockById.get(current.blockId) : undefined;
+  const english = getEnglishLog(db).get(today) ?? null;
+  const due = countDueCards(db, today);
+  const doneToday = plan.sessions.filter((s) => state.completedDates.get(s.key) === today);
+  const current = progress.currentKey ? plan.byKey.get(progress.currentKey) : undefined;
+  const budget = dayBudget(today);
 
   return (
-    <main className="space-y-6">
-      <header className="space-y-2">
-        <p className="flex items-baseline justify-between gap-3 text-[15px]">
-          <span className="text-stone-600">Hola.</span>
-          <span className="font-medium tabular-nums">
-            {route.done} / {route.total} · {route.pct}%
-          </span>
-        </p>
-        <ProgressBar value={route.pct} label="Progreso de la ruta" />
-      </header>
+    <main className="space-y-5">
+      <Header state={state} />
+      <h1 className="sr-only">Hoy</h1>
 
-      {justDone ? (
-        <DoneBanner
-          sessionId={justDone.id}
-          label={`Bloque ${justDone.blockId} · Día ${justDone.day} · ${justDone.title}`}
-          canUndo={route.canUndo(justDone.id)}
-        />
-      ) : null}
+      <EnglishTimer today={today} doneMinutes={english} />
 
-      {current ? (
-        <section aria-labelledby="hoy-title" className="space-y-3">
-          <h1 className="text-sm font-medium text-stone-600">Sesión de hoy</h1>
-          <article className="rounded-xl border border-stone-200 bg-white p-5">
-            <div className="flex flex-wrap gap-2">
-              <Chip tone="accent">
-                Bloque {current.blockId} · Día {current.day} · {current.hours} h
-              </Chip>
-              {current.hours === 3 ? <Chip>Proyecto</Chip> : null}
-              {isCertificationDay(current, block) ? <Chip>Certificación {block?.certificationCode}</Chip> : null}
-            </div>
-            <h2 id="hoy-title" className="mt-3 text-xl font-semibold leading-snug">
-              {current.title}
-            </h2>
-            <p className="mt-1 line-clamp-2 text-[15px] leading-relaxed text-stone-600">{current.description}</p>
-            <Link
-              href={`/sesion/${current.blockId}/${current.day}`}
-              className="mt-5 flex h-12 w-full items-center justify-center rounded-xl bg-accent text-base font-medium text-white hover:bg-accent-strong"
-            >
-              {route.done === 0 ? "Empezar" : "Continuar"}
-            </Link>
-          </article>
-          {next ? (
-            <p className="text-sm text-stone-600">
-              Siguiente: Día {next.day}
-              {next.blockId !== current.blockId ? ` (Bloque ${next.blockId})` : ""} · {next.title}
+      <section aria-labelledby="repaso-title" className="rounded-xl border border-stone-200 bg-white p-5">
+        <div className="flex items-baseline justify-between gap-3">
+          <h2 id="repaso-title" className="text-[17px] font-semibold">
+            2. Repaso
+          </h2>
+          <span className="text-sm text-stone-600">≈ 15 min</span>
+        </div>
+        {due > 0 ? (
+          <>
+            <p className="mt-1 text-[15px] text-stone-600">
+              {due === 1 ? "1 tarjeta pendiente" : `${due} tarjetas pendientes`} (máximo 15 por día).
             </p>
-          ) : null}
-        </section>
-      ) : (
-        <section aria-labelledby="fin-title" className="rounded-xl border border-stone-200 bg-white p-5">
-          <h1 id="fin-title" className="text-xl font-semibold">
-            Ruta completa.
-          </h1>
-          <p className="mt-1 text-[15px] text-stone-600">
-            {route.done} de {route.total} sesiones hechas.
+            <Link href="/repaso" className={`${buttonPrimary} mt-4 w-full`}>
+              Repasar
+            </Link>
+          </>
+        ) : (
+          <p className="mt-1 text-[15px] text-stone-600">Nada pendiente hoy. Las preguntas de cada lección entran al mazo al marcarla.</p>
+        )}
+      </section>
+
+      <section aria-labelledby="sesion-title" className="space-y-2">
+        <h2 id="sesion-title" className="px-1 text-[17px] font-semibold">
+          3. Sesión técnica de hoy <span className="font-normal text-stone-600">· {budget} h</span>
+        </h2>
+        {doneToday.map((s) => (
+          <SessionCard key={s.key} session={s} moduleTitle={plan.moduleById.get(s.moduleId)?.title ?? ""} done />
+        ))}
+        {current && doneToday.length === 0 ? (
+          <SessionCard session={current} moduleTitle={plan.moduleById.get(current.moduleId)?.title ?? ""} />
+        ) : null}
+        {current && doneToday.length > 0 ? (
+          <p className="px-1 text-sm text-stone-600">
+            Siguiente: {current.title} · {longDate(schedule.get(current.key)?.date ?? today)}
           </p>
-          <ul className="mt-4 divide-y divide-stone-100">
-            {route.blocks.map(({ block: b, done, total }) => (
-              <li key={b.id} className="flex items-center justify-between gap-3 py-2.5 text-[15px]">
-                <span className="truncate">
-                  Bloque {b.id} · {b.title}
-                </span>
-                <span className="shrink-0 tabular-nums text-stone-600">
-                  {done}/{total}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+        ) : null}
+        {!current && plan.sessions.length > 0 ? (
+          <div className="rounded-xl border border-stone-200 bg-white p-5">
+            <p className="text-xl font-semibold">Ruta completa.</p>
+            <p className="mt-1 text-[15px] text-stone-600">{progress.done} sesiones hechas.</p>
+          </div>
+        ) : null}
+        {plan.sessions.length === 0 ? (
+          <div className="rounded-xl border border-stone-200 bg-white p-5">
+            <p className="text-xl font-semibold">Sin sesiones.</p>
+            <p className="mt-1 text-[15px] text-stone-600">No hay contenido en content/. Revisa docs/CONTENT-FORMAT.md.</p>
+          </div>
+        ) : null}
+      </section>
     </main>
+  );
+}
+
+function Header({ state }: { state: Awaited<ReturnType<typeof loadAppState>> }) {
+  const { progress, today } = state;
+  return (
+    <header className="space-y-2">
+      <p className="flex items-baseline justify-between gap-3 text-[15px]">
+        <span className="capitalize text-stone-600">{longDate(today)}</span>
+        <span className="font-medium tabular-nums">
+          {progress.done} / {progress.total} · {progress.pct}%
+        </span>
+      </p>
+      <ProgressBar value={progress.pct} label="Progreso de la ruta" />
+    </header>
+  );
+}
+
+function SessionCard({ session, moduleTitle, done = false }: { session: PlanSession; moduleTitle: string; done?: boolean }) {
+  const objective = session.sections.objetivo ?? session.sections.description ?? "";
+  return (
+    <article className={`rounded-xl border p-5 ${done ? "border-accent/30 bg-accent-soft" : "border-stone-200 bg-white"}`}>
+      <p className="text-sm text-stone-600">{moduleTitle}</p>
+      <div className="mt-2 flex flex-wrap gap-2">
+        <KindBadge kind={session.kind} />
+        <Chip>{session.hours} h</Chip>
+        {done ? (
+          <Chip tone="accent">
+            <CheckIcon className="mr-1 size-3.5" /> Hecha
+          </Chip>
+        ) : null}
+      </div>
+      <h3 className="mt-3 text-xl font-semibold leading-snug">{session.title}</h3>
+      {objective ? <p className="mt-1 line-clamp-3 text-[15px] leading-relaxed text-stone-600">{objective}</p> : null}
+      <Link
+        href={sessionHref(session.key)}
+        className={
+          done
+            ? "mt-4 inline-block text-[15px] font-medium text-accent-strong underline underline-offset-4"
+            : `${buttonPrimary} mt-5 w-full`
+        }
+      >
+        {done ? "Ver sesión" : "Abrir sesión"}
+      </Link>
+    </article>
   );
 }

@@ -31,11 +31,39 @@ export function RouteIcon({ className = "size-6" }: IconProps) {
   );
 }
 
-export function AccountIcon({ className = "size-6" }: IconProps) {
+export function CardsIcon({ className = "size-6" }: IconProps) {
   return (
     <svg {...base} className={className}>
-      <circle cx="12" cy="8.5" r="3.5" />
-      <path d="M5 20c1.2-3.5 4-5 7-5s5.8 1.5 7 5" />
+      <rect x="3.5" y="7" width="13" height="13" rx="2" />
+      <path d="M7.5 4h11A2 2 0 0 1 20.5 6v11" />
+      <path d="M7.5 13.5h5" />
+    </svg>
+  );
+}
+
+export function ChartIcon({ className = "size-6" }: IconProps) {
+  return (
+    <svg {...base} className={className}>
+      <path d="M4 20h16" />
+      <path d="M7 16v-5M12 16V7M17 16v-8" />
+    </svg>
+  );
+}
+
+export function SettingsIcon({ className = "size-6" }: IconProps) {
+  return (
+    <svg {...base} className={className}>
+      <circle cx="12" cy="12" r="3" />
+      <path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M5.6 18.4l1.8-1.8M16.6 7.4l1.8-1.8" />
+    </svg>
+  );
+}
+
+export function MicIcon({ className = "size-5" }: IconProps) {
+  return (
+    <svg {...base} className={className}>
+      <rect x="9" y="3" width="6" height="11" rx="3" />
+      <path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21" />
     </svg>
   );
 }

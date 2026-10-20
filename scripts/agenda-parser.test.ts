@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { extractUrls, parseAgenda, parseCertification, stripUrls, toSeedSql } from "./agenda-parser.mjs";
+import { extractUrls, parseAgenda, parseCertification, stripUrls } from "./agenda-parser.mjs";
 
 const md = readFileSync(join(__dirname, "..", "content", "agenda.md"), "utf8");
 const blocks = parseAgenda(md);
@@ -84,16 +84,5 @@ describe("helpers", () => {
   it("parseCertification", () => {
     expect(parseCertification("Ninguna. FinOps Practitioner no entra.").certification).toBeNull();
     expect(() => parseCertification("Algo raro")).toThrow();
-  });
-
-  it("toSeedSql escapa comillas", () => {
-    const sql = toSeedSql([
-      {
-        id: 1, title: "O'Reilly", goal: "g", certification: null, certificationCode: null, certificationDay: null, totalDays: 1,
-        sessions: [{ day: 1, hours: 2, title: "t'1", description: "d", links: [] }],
-      },
-    ]);
-    expect(sql).toContain("'O''Reilly'");
-    expect(sql).toContain("'t''1'");
   });
 });

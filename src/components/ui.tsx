@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import type { SessionKind } from "@/lib/content-format";
 import type { BlockState } from "@/lib/progress";
 
 export function ProgressBar({ value, label }: { value: number; label: string }) {
@@ -36,6 +37,23 @@ export function BlockBadge({ state }: { state: BlockState }) {
   return <span className={`inline-flex shrink-0 items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${b.cls}`}>{b.text}</span>;
 }
 
-export function hoursLabel(hours: number) {
-  return hours === 3 ? "3 h · Proyecto" : `${hours} h`;
+export const KIND_LABEL: Record<SessionKind, string> = {
+  lesson: "Lección",
+  project: "Proyecto",
+  evaluation: "Evaluación",
+  course: "Curso",
+  task: "Cloud",
+};
+
+export function KindBadge({ kind }: { kind: SessionKind }) {
+  return <Chip tone={kind === "project" || kind === "evaluation" ? "accent" : "neutral"}>{KIND_LABEL[kind]}</Chip>;
 }
+
+export function Card({ children, className = "" }: { children: ReactNode; className?: string }) {
+  return <section className={`rounded-xl border border-stone-200 bg-white p-5 ${className}`}>{children}</section>;
+}
+
+export const buttonPrimary =
+  "inline-flex h-12 items-center justify-center rounded-xl bg-accent px-4 text-base font-medium text-white hover:bg-accent-strong disabled:opacity-60";
+export const buttonSecondary =
+  "inline-flex h-11 items-center justify-center rounded-xl border border-stone-300 bg-white px-4 text-sm font-medium hover:bg-stone-50 disabled:opacity-60";

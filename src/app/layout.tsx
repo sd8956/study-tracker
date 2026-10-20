@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Study Tracker",
-  description: "Ruta Cloud Security Architect",
+  description: "Plan de estudio local: libros, cursos y ruta Cloud Security",
   robots: { index: false, follow: false },
 };
 
