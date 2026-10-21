@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { CheckIcon } from "@/components/icons";
 import { BlockBadge, KIND_LABEL, ProgressBar } from "@/components/ui";
 import { loadAppState } from "@/lib/data";
-import { PHASES } from "@/lib/plan";
+import { PHASES, certificationSession, dayNumber } from "@/lib/plan";
 import { groupState } from "@/lib/progress";
 import { sessionHref } from "@/lib/routes";
 import { shortDate } from "@/lib/schedule";
@@ -25,7 +25,8 @@ export default async function RutaPage() {
         </p>
       </header>
       <p className="mt-1 text-[15px] text-stone-600">
-        Por horas: lunes a viernes 2 h, sábado 3 h, domingo descanso. Una sesión de 3 h puede ocupar dos días.
+        Cada día es una sesión y va en orden: si un día no estudias, el siguiente número espera. Presupuesto: lunes a
+        viernes 2 h, sábado 3 h, domingo descanso.
       </p>
 
       <section aria-labelledby="fases" className="mt-6 rounded-xl border border-stone-200 bg-white p-4">
@@ -75,9 +76,9 @@ export default async function RutaPage() {
                           <BlockBadge state={ms.state} />
                         </div>
                         {m.summary ? <p className="mt-1 line-clamp-2 text-sm text-stone-600">{m.summary}</p> : null}
-                        {m.block?.certificationCode ? (
+                        {m.block?.certificationCode && certificationSession(plan, m) ? (
                           <p className="mt-0.5 text-sm text-stone-600">
-                            Certificación {m.block.certificationCode} · día {m.block.certificationDay}
+                            Certificación {m.block.certificationCode} · Día {dayNumber(certificationSession(plan, m)!)}
                           </p>
                         ) : null}
                         <div className="mt-3 flex items-center gap-3">
@@ -118,8 +119,8 @@ export default async function RutaPage() {
                                 <span className="min-w-0 flex-1 text-[15px] leading-snug">
                                   <span className={isCurrent ? "font-semibold" : ""}>{s.title}</span>
                                   <span className="block text-sm text-stone-600">
-                                    {KIND_LABEL[s.kind]} · {s.hours} h
-                                    {planned ? ` · ${status === "done" ? "hecha " : ""}${shortDate(planned.date)}` : ""}
+                                    Día {dayNumber(s)} · {KIND_LABEL[s.kind]} · {s.hours} h
+                                    {status === "done" && planned ? ` · hecha ${shortDate(planned.date)}` : ""}
                                   </span>
                                   <span className="sr-only">
                                     {status === "done" ? " (hecha)" : isCurrent ? " (sesión actual)" : " (pendiente)"}

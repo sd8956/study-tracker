@@ -167,6 +167,17 @@ export function loadPlanFrom(contentDir: string): Plan {
   return { modules, sessions, byKey, moduleById: new Map(modules.map((m) => [m.id, m])) };
 }
 
+/** "Día N": the session's place in the whole route (a missed day never skips a number). */
+export function dayNumber(session: Pick<PlanSession, "position">): number {
+  return session.position + 1;
+}
+
+/** The Cloud session on which a block's certification exam falls, if any. */
+export function certificationSession(plan: Plan, mod: PlanModule): PlanSession | undefined {
+  const b = mod.block;
+  return b?.certificationDay ? plan.byKey.get(`cloud/b${b.id}-d${b.certificationDay}`) : undefined;
+}
+
 export function contentDir(): string {
   return process.env.STUDY_CONTENT_DIR || join(process.cwd(), "content");
 }

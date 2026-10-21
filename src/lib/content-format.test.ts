@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { parseModuleFile, parseSessionFile } from "./content-format";
-import { loadPlanFrom } from "./plan";
+import { certificationSession, dayNumber, loadPlanFrom } from "./plan";
 
 const FIXTURES = join(__dirname, "..", "..", "test", "fixtures", "content");
 
@@ -179,5 +179,20 @@ describe("loadPlanFrom with content/plan-order.txt", () => {
     expect(() => loadPlanFrom(withOrder("01-alpha\ncloud-b1\ncloud-b2\n"))).toThrow(/plan-order\.txt.*02-beta/);
     expect(() => loadPlanFrom(withOrder("01-alpha\n01-alpha\n02-beta\ncloud-b1\ncloud-b2\n"))).toThrow(/plan-order\.txt.*01-alpha/);
     expect(() => loadPlanFrom(withOrder("01-alpha\n02-beta\ncloud-b1\ncloud-b2\n99-ghost\n"))).toThrow(/plan-order\.txt.*99-ghost/);
+  });
+});
+
+describe("study day numbers", () => {
+  const plan = loadPlanFrom(FIXTURES);
+
+  it("numbers every session as Día 1..N in plan order", () => {
+    expect(plan.sessions.map(dayNumber)).toEqual([1, 2, 3, 4, 5, 6, 7]);
+  });
+
+  it("finds the session that holds a block's certification", () => {
+    const block = plan.moduleById.get("cloud-b2")!;
+    expect(certificationSession(plan, block)?.key).toBe("cloud/b2-d1");
+    expect(dayNumber(certificationSession(plan, block)!)).toBe(7);
+    expect(certificationSession(plan, plan.moduleById.get("cloud-b1")!)).toBeUndefined();
   });
 });

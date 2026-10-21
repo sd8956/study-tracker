@@ -11,7 +11,7 @@ La ruta sigue `content/plan-order.txt`: los módulos de libros y repos se interc
 de **Cloud Security** (139 sesiones); después vienen DataCamp (con el libro de AI Engineering justo antes de
 los tracks de IA) y Scrimba. Lunes a viernes 2 h de ruta, sábado 3 h, domingo descanso. Las sesiones
 son secuenciales y se reparten por horas: una sesión de 3 h puede ocupar dos días de semana
-("Avancé X h hoy" en Hoy) y la siguiente empieza en las horas que quedan. Si un día no estudias, la siguiente espera.
+("Avancé X h hoy" en Hoy) y la siguiente empieza en las horas que quedan. Cada sesión es un "Día N" de la ruta (sin fechas previstas): si un día no estudias, el siguiente número espera.
 
 - Next.js 16 (App Router, TypeScript) + Tailwind 4
 - SQLite con `node:sqlite` (sin servicios externos, sin login)

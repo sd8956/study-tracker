@@ -5,7 +5,7 @@ import { WorkButton } from "@/components/work-button";
 import { CheckIcon } from "@/components/icons";
 import { Chip, KindBadge, ProgressBar, buttonPrimary } from "@/components/ui";
 import { loadAppState } from "@/lib/data";
-import type { PlanSession } from "@/lib/plan";
+import { dayNumber, type PlanSession } from "@/lib/plan";
 import { sessionHref } from "@/lib/routes";
 import { dayBudget, longDate, weekday } from "@/lib/schedule";
 import { countDueCards, getEnglishLog } from "@/lib/store";
@@ -99,7 +99,7 @@ export default async function HoyPage() {
         ))}
         {current && plannedToday.length === 0 ? (
           <p className="px-1 text-sm text-stone-600">
-            Por hoy terminaste. Siguiente: {current.title} · {longDate(schedule.get(current.key)?.date ?? today)}
+            Por hoy terminaste. Siguiente: Día {dayNumber(current)} · {current.title}
           </p>
         ) : null}
         {!current && plan.sessions.length > 0 ? (
@@ -155,6 +155,7 @@ function SessionCard({
       <p className="text-sm text-stone-600">{moduleTitle}</p>
       <div className="mt-2 flex flex-wrap gap-2">
         <KindBadge kind={session.kind} />
+        <Chip>Día {dayNumber(session)}</Chip>
         <Chip>{todayHours !== undefined && todayHours !== session.hours ? `hoy ${todayHours} h de ${session.hours} h` : `${session.hours} h`}</Chip>
         {done ? (
           <Chip tone="accent">
@@ -164,7 +165,7 @@ function SessionCard({
       </div>
       <h3 className="mt-3 text-xl font-semibold leading-snug">{session.title}</h3>
       {objective ? <p className="mt-1 line-clamp-3 text-[15px] leading-relaxed text-stone-600">{objective}</p> : null}
-      {continuesOn ? <p className="mt-2 text-sm text-stone-600">Sigue el {longDate(continuesOn)}.</p> : null}
+      {continuesOn ? <p className="mt-2 text-sm text-stone-600">Continúa en tu próximo día de estudio.</p> : null}
       <Link
         href={sessionHref(session.key)}
         className={
