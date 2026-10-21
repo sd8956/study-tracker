@@ -1,0 +1,27 @@
+# Study order (one module per line). Every module and Cloud block must appear exactly once.
+# Cloud blocks are interleaved with the book modules; the AI book goes right before the AI tracks.
+
+01-problem-solving
+cloud-b1
+02-craft
+cloud-b2
+03-design-architecture
+cloud-b3
+04-data-intensive
+cloud-b4
+05-system-design
+cloud-b5
+06-microservices
+cloud-b6
+
+08-python-fundamentals
+09-sql-server-developer
+10-associate-python-developer
+11-python-programmer
+12-python-software-engineering
+13-python-toolbox
+07-ai-engineering
+14-associate-ai-engineer
+15-langchain
+16-dsa-python
+17-scrimba-fullstack

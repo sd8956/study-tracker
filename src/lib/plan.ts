@@ -127,9 +127,36 @@ function loadCloud(agendaFile: string): PlanModule[] {
   });
 }
 
-/** Parses the whole plan from a content directory (`modules/` + `agenda.md`). Throws ContentError on invalid files. */
+const ORDER_FILE = "plan-order.txt";
+
+/**
+ * Applies content/plan-order.txt when present: one module id per line (`NN-name` or `cloud-bN`),
+ * `#` comments and blank lines ignored. It must list every module exactly once.
+ */
+function applyOrder(modules: PlanModule[], orderFile: string): PlanModule[] {
+  if (!existsSync(orderFile)) return modules;
+  const ids = readFileSync(orderFile, "utf8")
+    .split("\n")
+    .map((l) => l.replace(/#.*/, "").trim())
+    .filter(Boolean);
+  const byId = new Map(modules.map((m) => [m.id, m]));
+  const seen = new Set<string>();
+  for (const id of ids) {
+    if (!byId.has(id)) throw new ContentError(`content/${ORDER_FILE}`, `módulo desconocido "${id}"`);
+    if (seen.has(id)) throw new ContentError(`content/${ORDER_FILE}`, `módulo repetido "${id}"`);
+    seen.add(id);
+  }
+  const missing = modules.filter((m) => !seen.has(m.id)).map((m) => m.id);
+  if (missing.length) throw new ContentError(`content/${ORDER_FILE}`, `faltan módulos: ${missing.join(", ")}`);
+  return ids.map((id) => byId.get(id)!);
+}
+
+/** Parses the whole plan from a content directory (`modules/` + `agenda.md` + optional `plan-order.txt`). Throws ContentError on invalid files. */
 export function loadPlanFrom(contentDir: string): Plan {
-  const modules = [...loadModules(join(contentDir, "modules")), ...loadCloud(join(contentDir, "agenda.md"))];
+  const modules = applyOrder(
+    [...loadModules(join(contentDir, "modules")), ...loadCloud(join(contentDir, "agenda.md"))],
+    join(contentDir, ORDER_FILE),
+  );
   const sessions = modules.flatMap((m) => m.sessions);
   sessions.forEach((s, i) => (s.position = i));
   const byKey = new Map<string, PlanSession>();
@@ -152,7 +179,7 @@ function signature(dir: string): string {
     for (const e of readdirSync(d, { withFileTypes: true })) {
       const p = join(d, e.name);
       if (e.isDirectory()) walk(p);
-      else if (e.name.endsWith(".md")) parts.push(`${p}:${statSync(p).mtimeMs}`);
+      else if (e.name.endsWith(".md") || e.name === ORDER_FILE) parts.push(`${p}:${statSync(p).mtimeMs}`);
     }
   };
   walk(dir);

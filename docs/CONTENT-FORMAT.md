@@ -4,7 +4,8 @@ The study plan lives in `content/`. The app reads it at runtime; there is no bui
 
 ```
 content/
-  agenda.md                         Cloud Security route (last phase, existing format)
+  agenda.md                         Cloud Security route (6 blocks, existing format)
+  plan-order.txt                    optional study order (see below)
   modules/
     01-problem-solving/
       module.md                     module metadata
@@ -13,7 +14,7 @@ content/
     02-.../
 ```
 
-Order: modules sort by their `NN-` prefix, sessions by their `NN-` prefix inside the module. After every module comes the Cloud Security route parsed from `content/agenda.md`.
+Order: sessions sort by their `NN-` prefix inside the module. Modules follow `content/plan-order.txt` when it exists: one id per line (a module folder such as `01-problem-solving`, or a Cloud block `cloud-b1` … `cloud-b6`); `#` comments and blank lines are ignored, and every module and block must appear exactly once or the plan fails to load. Without that file, modules sort by their `NN-` prefix and the Cloud route comes last.
 
 A session's stable key is `<module-dir>/<file-name-without-.md>` (for example `01-problem-solving/01-binary-search`). Progress is stored by key, so renumbering files breaks progress: append new sessions, never renumber existing ones after the user started.
 

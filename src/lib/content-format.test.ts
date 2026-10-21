@@ -1,3 +1,5 @@
+import { cpSync, mkdtempSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { parseModuleFile, parseSessionFile } from "./content-format";
@@ -147,5 +149,35 @@ describe("loadPlanFrom (fixtures)", () => {
     const empty = loadPlanFrom(join(FIXTURES, "does-not-exist"));
     expect(empty.sessions).toEqual([]);
     expect(empty.modules).toEqual([]);
+  });
+});
+
+describe("loadPlanFrom with content/plan-order.txt", () => {
+  const withOrder = (order: string) => {
+    const dir = mkdtempSync(join(tmpdir(), "study-order-"));
+    cpSync(FIXTURES, dir, { recursive: true });
+    writeFileSync(join(dir, "plan-order.txt"), order);
+    return dir;
+  };
+
+  it("interleaves modules and cloud blocks in the listed order, ignoring comments and blank lines", () => {
+    const plan = loadPlanFrom(withOrder("# order\n01-alpha\ncloud-b1\n\n02-beta\ncloud-b2\n"));
+    expect(plan.modules.map((m) => m.id)).toEqual(["01-alpha", "cloud-b1", "02-beta", "cloud-b2"]);
+    expect(plan.sessions.map((s) => s.key)).toEqual([
+      "01-alpha/01-first-lesson",
+      "01-alpha/02-project",
+      "cloud/b1-d1",
+      "cloud/b1-d2",
+      "02-beta/01-course",
+      "02-beta/02-evaluation",
+      "cloud/b2-d1",
+    ]);
+    expect(plan.sessions.map((s) => s.position)).toEqual([0, 1, 2, 3, 4, 5, 6]);
+  });
+
+  it("rejects an order that misses, repeats or invents a module", () => {
+    expect(() => loadPlanFrom(withOrder("01-alpha\ncloud-b1\ncloud-b2\n"))).toThrow(/plan-order\.txt.*02-beta/);
+    expect(() => loadPlanFrom(withOrder("01-alpha\n01-alpha\n02-beta\ncloud-b1\ncloud-b2\n"))).toThrow(/plan-order\.txt.*01-alpha/);
+    expect(() => loadPlanFrom(withOrder("01-alpha\n02-beta\ncloud-b1\ncloud-b2\n99-ghost\n"))).toThrow(/plan-order\.txt.*99-ghost/);
   });
 });
