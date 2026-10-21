@@ -20,15 +20,15 @@ Branch: `feat/local-study-plan` · Delivery: ask-on-risk · Test runner: vitest 
 | --- | --- | --- | --- | --- |
 | T1 | S3 content format | inline | done | — |
 | T2 | S7, S2, S5, S6, S8, S4 app rewrite | delegated (parallel unit, writer W-app) | done (typecheck, lint, 347 tests, build, smoke OK) | 2864e67 |
-| T3 | S3, S4 module 01 problem solving & algorithms | delegated (parallel content unit) | pending | — |
-| T4 | S3, S4 module 02 craft & practices | delegated (parallel content unit) | pending | — |
-| T5 | S3, S4 module 03 design & architecture | delegated (parallel content unit) | pending | — |
-| T6 | S3, S4 module 04 data-intensive systems | delegated (parallel content unit) | pending | — |
-| T7 | S3, S4 module 05 system design | delegated (parallel content unit) | pending | — |
-| T8 | S3, S4 module 06 microservices | delegated (parallel content unit) | pending | — |
-| T9 | S3, S4 module 07 AI engineering | delegated (parallel content unit) | pending | — |
-| T10 | S1, S4 modules 08–17 DataCamp + Scrimba course sessions | delegated (2 writers: DataCamp 08–16, Scrimba 17) | in progress | — |
-| T11 | all | independent verifier (Risk items 2, 5: auth removal, deps) | in progress on 2864e67 | — |
+| T3 | S3, S4 module 01 problem solving & algorithms | delegated (parallel content unit) | done | — |
+| T4 | S3, S4 module 02 craft & practices | delegated (parallel content unit) | done | — |
+| T5 | S3, S4 module 03 design & architecture | delegated (parallel content unit) | done | — |
+| T6 | S3, S4 module 04 data-intensive systems | delegated (parallel content unit) | done | — |
+| T7 | S3, S4 module 05 system design | delegated (parallel content unit) | done | — |
+| T8 | S3, S4 module 06 microservices | delegated (parallel content unit) | done | — |
+| T9 | S3, S4 module 07 AI engineering | delegated (parallel content unit) | done | — |
+| T10 | S1, S4 modules 08–17 DataCamp + Scrimba course sessions | delegated (2 writers: DataCamp 08–16, Scrimba 17) | done | 7bb1209, d21db9e |
+| T11 | all | independent verifier (Risk items 2, 5: auth removal, deps) | done: PASS items 2 & 5; S2 fixed by hour budget | c83ba26, 93acd9c, 27376de |
 
 Route evidence: T2–T9 are independent units with disjoint edit surfaces (`src/**` and so on vs `content/modules/NN-*/**`). Each needs well over 100 lines, so the Writer trigger (a) parallelism holds.
 
@@ -41,3 +41,4 @@ Route evidence: T2–T9 are independent units with disjoint edit surfaces (`src/
 - **L5 (progress):** Research inventory: DataCamp 216 h listed, about 149 h after removing duplicates; Scrimba 108 h. T2 landed in 2864e67. RDD is on; assess returned review_due high_risk, but it is unassessable while content writers keep adding untracked files. Native review is deferred until the content is committed. Known gaps: an unknown session key returns 200 with "No encontrado"; a 3 h session can land on a weekday.
 - **L6 (verification of 2864e67):** Security (item 2) PASS: foreign Origin/Host → 403, cross-origin server actions rejected, key never reaches the client, grade uses the server's question, transcribe limits. Deps (item 5) PASS. Agenda regression identical (6 blocks / 139). S4–S8 PASS. S2 PARTIAL. Blocker: `projectSchedule` puts one session per study day whatever its hours, so 51 of 63 3 h sessions land on weekdays. Two advisories were fixed in c83ba26 (RED → GREEN): a same-origin port check, and import now requires every table so a partial backup can't wipe the DB. Open: S2 hour-sizing (product decision asked to the user); an unknown session returns 200.
 - **L7 (2026-10-20, user, verbatim):** "A, repartir por horas". Implemented hour-budget scheduling: a work_log table (migration v2, backup v2), `logWork` for partial hours on the current session, completion logs the remainder, and undo removes only the auto row. Today shows each session's hours for today and "Sigue el …". Tests RED → GREEN; 489 tests, build and smoke all pass. All 17 content modules are committed. Pending: the native RDD review of the branch, plus the advisory that an unknown session returns 200.
+- **L8 (2026-10-21):** Module 03 committed (5fca8d6); all 17 modules are now in. The unknown-session 404 is fixed in the proxy (27376de, RED → GREEN). Live NaN smoke with the user's key: grade 200 (score + feedback), chat 200, transcribe 200 (a sine tone, so the text is empty as expected). Suite 492 passed, build OK. Native RDD review: consent was granted twice (whole branch, then the app commit alone). Both STARTs stopped with `lens_context_budget_exceeded` (65,948 and 8,801 lines), so no review authority was created. Splitting the history to fit the budget was not done. Security coverage rests on the independent verifier (L6, PASS). `.atl/` was added to `.git/info/exclude` (local only).
