@@ -1,55 +1,20 @@
-// Estado derivado de la ruta (espejo en TS de las reglas que impone la DB).
-// La DB es la autoridad; esto decide qué muestra la UI.
-
-export type Link = { url: string; label: string };
-
-export type Block = {
-  id: number;
-  title: string;
-  goal: string;
-  certification: string | null;
-  certificationCode: string | null;
-  certificationDay: number | null;
-  totalDays: number;
-};
-
-export type Session = {
-  id: number;
-  position: number;
-  blockId: number;
-  day: number;
-  hours: number;
-  title: string;
-  description: string;
-  links: Link[];
-};
+// Derived progress state over the plan (pure). The DB enforces the rules; this decides what the UI shows.
 
 export type SessionStatus = "done" | "current" | "future";
 export type BlockState = "pendiente" | "en_curso" | "hecho";
 
-export type BlockStats = {
-  block: Block;
-  done: number;
-  total: number;
-  pct: number;
-  state: BlockState;
-};
-
-export type RouteState = {
-  sessions: Session[]; // ordenadas por position
+export type ProgressState = {
   total: number;
   done: number;
   pct: number;
-  current: Session | null;
-  next: Session | null; // la siguiente a current (solo preview)
-  lastCompleted: Session | null;
-  blocks: BlockStats[];
-  statusOf: (sessionId: number) => SessionStatus;
-  canComplete: (sessionId: number) => boolean;
-  canUndo: (sessionId: number) => boolean;
+  currentKey: string | null;
+  lastCompletedKey: string | null;
+  statusOf: (key: string) => SessionStatus;
+  canComplete: (key: string) => boolean;
+  canUndo: (key: string) => boolean;
 };
 
-/** Porcentaje redondeado que nunca muestra 100 % si falta algo (ni 0 % si hay algo). */
+/** Rounded percentage that never shows 100 % while something is missing (nor 0 % once something is done). */
 export function percent(done: number, total: number): number {
   if (total <= 0) return 0;
   const p = Math.round((done / total) * 100);
@@ -58,53 +23,29 @@ export function percent(done: number, total: number): number {
   return p;
 }
 
-export function buildRoute(blocks: Block[], sessions: Session[], completedIds: Iterable<number>): RouteState {
-  const ordered = [...sessions].sort((a, b) => a.position - b.position);
-  const completed = new Set(completedIds);
-  const validIds = new Set(ordered.map((s) => s.id));
-  for (const id of completed) if (!validIds.has(id)) completed.delete(id);
-
-  const current = ordered.find((s) => !completed.has(s.id)) ?? null;
-  let lastCompleted: Session | null = null;
-  for (const s of ordered) if (completed.has(s.id)) lastCompleted = s;
-
-  const next = current ? (ordered.find((s) => s.position > current.position && !completed.has(s.id)) ?? null) : null;
-
-  const statusOf = (id: number): SessionStatus => {
-    if (completed.has(id)) return "done";
-    if (current && current.id === id) return "current";
-    return "future";
-  };
-
-  const blockStats: BlockStats[] = [...blocks]
-    .sort((a, b) => a.id - b.id)
-    .map((block) => {
-      const own = ordered.filter((s) => s.blockId === block.id);
-      const total = own.length;
-      const done = own.filter((s) => completed.has(s.id)).length;
-      const hasCurrent = current?.blockId === block.id;
-      const state: BlockState = total > 0 && done === total ? "hecho" : done > 0 || hasCurrent ? "en_curso" : "pendiente";
-      return { block, done, total, pct: percent(done, total), state };
-    });
-
-  const done = completed.size;
+/** `keys` in plan order; `completed` may hold keys no longer in the plan (ignored). */
+export function buildProgress(keys: string[], completed: { has: (key: string) => boolean }): ProgressState {
+  const currentKey = keys.find((k) => !completed.has(k)) ?? null;
+  const lastCompletedKey = [...keys].reverse().find((k) => completed.has(k)) ?? null;
+  const done = keys.filter((k) => completed.has(k)).length;
   return {
-    sessions: ordered,
-    total: ordered.length,
+    total: keys.length,
     done,
-    pct: percent(done, ordered.length),
-    current,
-    next,
-    lastCompleted,
-    blocks: blockStats,
-    statusOf,
-    canComplete: (id) => current !== null && current.id === id,
-    canUndo: (id) => lastCompleted !== null && lastCompleted.id === id,
+    pct: percent(done, keys.length),
+    currentKey,
+    lastCompletedKey,
+    statusOf: (k) => (completed.has(k) ? "done" : k === currentKey ? "current" : "future"),
+    canComplete: (k) => k === currentKey,
+    canUndo: (k) => k === lastCompletedKey,
   };
 }
 
-export function isCertificationDay(session: Pick<Session, "blockId" | "day">, block: Pick<Block, "id" | "certificationDay"> | undefined) {
-  return !!block && block.id === session.blockId && block.certificationDay === session.day;
+export function groupState(keys: string[], progress: ProgressState): { done: number; total: number; pct: number; state: BlockState } {
+  const done = keys.filter((k) => progress.statusOf(k) === "done").length;
+  const total = keys.length;
+  const hasCurrent = progress.currentKey !== null && keys.includes(progress.currentKey);
+  const state: BlockState = total > 0 && done === total ? "hecho" : done > 0 || hasCurrent ? "en_curso" : "pendiente";
+  return { done, total, pct: percent(done, total), state };
 }
 
 export function domainOf(url: string): string {
@@ -117,8 +58,7 @@ export function domainOf(url: string): string {
 
 export function isSafeExternalUrl(url: string): boolean {
   try {
-    const u = new URL(url);
-    return u.protocol === "https:";
+    return new URL(url).protocol === "https:";
   } catch {
     return false;
   }

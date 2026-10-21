@@ -1,5 +1,7 @@
 # Study Tracker — UX Spec (Fase 1)
 
+> **Fase 2 (plan local) reemplaza** login, allowlist, `/cuenta`, las rutas `/ruta/[bloque]` y `/sesion/[bloque]/[dia]` y el enlace a Grok. Ver la sección **Fase 2** al final; el resto de este documento sigue vigente donde no la contradiga.
+
 Producto personal de Santiago Duque. Ruta Cloud Security Architect: 6 bloques, 139 sesiones. Solo él marca progreso. ES. Mobile-first. $0 stack.
 
 Fuente de contenido: `Agenda-Cloud-Security-Architect.md` (seed estático en DB o JSON en repo).
@@ -232,3 +234,46 @@ Cap práctico: si el `q` supera ~1800 chars, truncar descripción con “…” 
 
 ### Fuera de 1.1
 Chat embebido, historial en la app, API xAI, multi-modelo.
+
+---
+
+## Fase 2 — Plan local (SQLite, sin login)
+
+La app corre en el equipo (`127.0.0.1`), sin cuentas. La ruta crece: libros y repos → DataCamp → Scrimba → Cloud Security (los 6 bloques de Fase 1, al final). El contenido vive en `content/` (formato en `docs/CONTENT-FORMAT.md`).
+
+### Calendario
+
+- Lunes a viernes: 1 h de inglés + 2 h de ruta. Sábado: 1 h + 3 h. Domingo: descanso.
+- Reparto por horas, en orden: cada día tiene su presupuesto (2 h o 3 h) y una sesión ocupa los días que necesiten sus horas. Las horas hechas hoy (sesiones completadas o "Avancé X h hoy") descuentan del día. Las hechas muestran su fecha; las futuras, la fecha prevista.
+
+### Info architecture
+
+```
+/                 → Hoy (inglés → repaso → sesión técnica; domingo: "Hoy descansas")
+/ruta             → Fases → módulos (plegables, con progreso) → sesiones con estado
+/sesion/<módulo>/<archivo>   → Sesión (Cloud: /sesion/cloud/b<bloque>-d<día>)
+/repaso           → Tarjetas que vencen hoy (máx. 15)
+/progreso         → Racha, inglés, horas, % por fase, evaluaciones, cajas, mapa de 12 semanas
+/ajustes          → Tutor sí/no, exportar e importar copia (reemplaza /cuenta)
+```
+
+Bottom nav: Hoy · Ruta · Repaso · Progreso · Ajustes.
+
+### Hoy
+
+1. **Inglés**: cuenta regresiva 60:00 (Empezar / Pausar / Reiniciar). Sobrevive a recargar la página. Al llegar a 0 suena un aviso (tres series de tonos) y, si diste permiso, una notificación. Luego "Marcar inglés de hoy como hecho" (también antes de tiempo, con confirmación).
+2. **Repaso**: cuántas tarjetas vencen hoy → botón a `/repaso`.
+3. **Sesión técnica de hoy**: módulo, título, tipo (Lección, Proyecto, Evaluación, Curso, Cloud), horas, objetivo y "Abrir sesión". Si ya la hiciste hoy: tarjeta en estado hecho y la siguiente con su fecha.
+
+### Sesión
+
+- Objetivo, Estudio, Qué hacer, Conceptos clave, Ejercicio, Material y Fuentes (markdown, sin HTML).
+- **Preguntas de repaso** en modo recuerdo activo: respuesta escrita o dictada (micrófono) → "Evaluar con tutor" o "Ver respuesta".
+- **Evaluación**: una pregunta a la vez, calificada por el tutor o autoevaluada (Bien / A medias / Mal). Resultado en %; ≥ 70 % aprobado, si no "Repasa: …". No bloquea marcar la sesión.
+- **Explícalo con tus palabras** (Feynman): nota guardada + feedback del tutor.
+- **Tutor**: chat sobre la sesión. Sin `NAN_API_KEY` se ocultan tutor y micrófono y queda la autoevaluación.
+- Barra fija: "Marcar sesión hecha" solo en la actual; "Deshacer" solo en la última completada.
+
+### Repaso
+
+Pregunta → respuesta opcional (texto o voz, nota del tutor opcional) → respuesta modelo → **Bien** (sube de caja) / **Dudé** (mañana) / **Mal** (caja 1). Intervalos: 1, 3, 7, 21 y 60 días.

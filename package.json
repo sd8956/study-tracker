@@ -3,30 +3,27 @@
   "version": "0.1.0",
   "private": true,
   "engines": {
-    "node": ">=20.9.0"
+    "node": ">=22.13.0"
   },
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -H 127.0.0.1",
     "build": "next build",
-    "start": "next start",
+    "start": "next start -H 127.0.0.1",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
-    "seed": "node scripts/parse-agenda.mjs",
-    "dev:fake-supabase": "node scripts/dev/fake-supabase.mjs"
+    "test": "vitest run"
   },
   "dependencies": {
-    "@supabase/ssr": "0.12.0",
-    "@supabase/supabase-js": "2.109.0",
     "next": "16.3.8",
     "react": "19.3.0",
     "react-dom": "19.3.0",
+    "react-markdown": "10.1.0",
+    "remark-gfm": "4.0.1",
     "server-only": "0.0.1"
   },
   "devDependencies": {
-    "@electric-sql/pglite": "0.5.8",
     "@tailwindcss/postcss": "4.3.3",
-    "@types/node": "20.19.11",
+    "@types/node": "26.6.5",
     "@types/react": "19.2.2",
     "@types/react-dom": "19.2.2",
     "eslint": "9.39.5",

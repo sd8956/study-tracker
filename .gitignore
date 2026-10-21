@@ -19,3 +19,9 @@ npm-debug.log*
 /coverage
 .vercel
 .env*
+
+# local study material (copyrighted, never commit)
+/Books/
+
+# local SQLite database
+/data/

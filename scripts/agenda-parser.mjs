@@ -1,5 +1,5 @@
-// Pure parser for content/agenda.md -> structured blocks/sessions + seed SQL.
-// No I/O here so it can be unit-tested. The CLI lives in parse-agenda.mjs.
+// Pure parser for content/agenda.md -> structured blocks/sessions.
+// No I/O here so it can be unit-tested. The app loads it at runtime (src/lib/plan.ts).
 
 const BLOCK_RE = /^##\s+Bloque\s+(\d+)\s+[—–-]\s+(.+?)\s*$/;
 const SESSION_RE = /^###\s+Día\s+(\d+)\s+·\s+(\d+)\s*h\s+·\s+(.+?)\s*$/;
@@ -155,60 +155,4 @@ export function validateAgenda(blocks) {
       throw new Error(`Bloque ${b.id}: día de certificación fuera de rango`);
     }
   });
-}
-
-/** @param {string | null} value */
-function sqlText(value) {
-  if (value === null || value === undefined) return "null";
-  return `'${String(value).replace(/'/g, "''")}'`;
-}
-
-/**
- * Idempotent seed: upserts blocks and sessions; never touches progress.
- * sessions.id == sessions.position == global order (1..N).
- * @param {AgendaBlock[]} blocks
- */
-export function toSeedSql(blocks) {
-  const total = blocks.reduce((n, b) => n + b.sessions.length, 0);
-  const out = [];
-  out.push("-- GENERADO por scripts/parse-agenda.mjs a partir de content/agenda.md. No editar a mano.");
-  out.push(`-- ${blocks.length} bloques, ${total} sesiones.`);
-  out.push("begin;");
-  out.push("");
-  out.push("insert into public.blocks (id, title, goal, certification, certification_code, certification_day, total_days) values");
-  out.push(
-    blocks
-      .map(
-        (b) =>
-          `  (${b.id}, ${sqlText(b.title)}, ${sqlText(b.goal)}, ${sqlText(b.certification)}, ${sqlText(b.certificationCode)}, ${b.certificationDay ?? "null"}, ${b.totalDays})`,
-      )
-      .join(",\n"),
-  );
-  out.push(
-    "on conflict (id) do update set title = excluded.title, goal = excluded.goal, certification = excluded.certification,",
-  );
-  out.push(
-    "  certification_code = excluded.certification_code, certification_day = excluded.certification_day, total_days = excluded.total_days;",
-  );
-  out.push("");
-  out.push("insert into public.sessions (id, position, block_id, day, hours, title, description, links) values");
-  let position = 0;
-  const rows = [];
-  for (const b of blocks) {
-    for (const s of b.sessions) {
-      position += 1;
-      rows.push(
-        `  (${position}, ${position}, ${b.id}, ${s.day}, ${s.hours}, ${sqlText(s.title)}, ${sqlText(s.description)}, ${sqlText(JSON.stringify(s.links))}::jsonb)`,
-      );
-    }
-  }
-  out.push(rows.join(",\n"));
-  out.push(
-    "on conflict (id) do update set position = excluded.position, block_id = excluded.block_id, day = excluded.day, hours = excluded.hours,",
-  );
-  out.push("  title = excluded.title, description = excluded.description, links = excluded.links;");
-  out.push("");
-  out.push("commit;");
-  out.push("");
-  return out.join("\n");
 }

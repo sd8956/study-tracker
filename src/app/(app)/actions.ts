@@ -1,51 +1,129 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
-import { getAuth } from "@/lib/auth";
-import { getSupabaseEnv } from "@/lib/env";
-import { createClient } from "@/lib/supabase/server";
-import { GENERIC_ERROR, rpcErrorMessage } from "@/lib/rpc-errors";
+import { headers } from "next/headers";
+import { getDb } from "@/lib/db";
+import type { ReviewResult } from "@/lib/leitner";
+import { REVIEW_RESULTS } from "@/lib/leitner";
+import { isLocalRequest } from "@/lib/origin";
+import { getPlan, questionFor } from "@/lib/plan";
+import { studyTz, todayIn } from "@/lib/schedule";
+import {
+  clearChat,
+  completeSession,
+  importData,
+  logEnglish,
+  logWork,
+  reviewCard,
+  saveAnswer,
+  saveNote,
+  undoSession,
+  type Result,
+} from "@/lib/store";
+import { MAX_ANSWER_CHARS } from "@/lib/tutor-core";
 
-export type ActionResult = { ok: true; message?: string } | { ok: false; error: string };
+export type ActionResult = Result;
 
-function isSessionId(value: unknown): value is number {
-  return typeof value === "number" && Number.isInteger(value) && value > 0 && value < 100000;
+const NOT_LOCAL: ActionResult = { ok: false, error: "Solo se aceptan cambios desde este equipo." };
+const INVALID: ActionResult = { ok: false, error: "Solicitud inválida." };
+
+async function isLocal(): Promise<boolean> {
+  return isLocalRequest(await headers());
 }
 
-/**
- * Marca la sesión como hecha. La regla "no saltar" la aplica Postgres
- * (complete_next_session + trigger) con la sesión del usuario y RLS.
- */
-export async function completeSessionAction(sessionId: number): Promise<ActionResult> {
-  if (!isSessionId(sessionId)) return { ok: false, error: GENERIC_ERROR };
-  const auth = await getAuth();
-  if (!auth.ok) return { ok: false, error: "No tienes acceso. Vuelve a entrar." };
+const isKey = (v: unknown): v is string => typeof v === "string" && v.length > 0 && v.length < 300;
 
-  const { error } = await auth.ctx.supabase.rpc("complete_next_session", { p_session_id: sessionId });
-  if (error) return { ok: false, error: rpcErrorMessage(error) };
+export async function completeSessionAction(key: string): Promise<ActionResult> {
+  if (!(await isLocal())) return NOT_LOCAL;
+  if (!isKey(key)) return INVALID;
+  const r = completeSession(getDb(), getPlan(), key, new Date(), studyTz());
+  if (r.ok) revalidatePath("/", "layout");
+  return r;
+}
 
+export async function undoSessionAction(key: string): Promise<ActionResult> {
+  if (!(await isLocal())) return NOT_LOCAL;
+  if (!isKey(key)) return INVALID;
+  const r = undoSession(getDb(), getPlan(), key);
+  if (r.ok) revalidatePath("/", "layout");
+  return r;
+}
+
+export async function logWorkAction(key: string, hours: number): Promise<ActionResult> {
+  if (!(await isLocal())) return NOT_LOCAL;
+  if (!isKey(key) || !Number.isInteger(hours)) return INVALID;
+  const r = logWork(getDb(), getPlan(), key, hours, new Date(), studyTz());
+  if (r.ok) revalidatePath("/", "layout");
+  return r;
+}
+
+export async function logEnglishAction(minutes: number): Promise<ActionResult> {
+  if (!(await isLocal())) return NOT_LOCAL;
+  if (typeof minutes !== "number" || !Number.isFinite(minutes) || minutes < 0 || minutes > 600) return INVALID;
+  const now = new Date();
+  logEnglish(getDb(), todayIn(studyTz(), now), minutes, now);
   revalidatePath("/", "layout");
-  redirect(`/?hecho=${sessionId}`);
+  return { ok: true };
 }
 
-/** Deshace la última sesión completada (debe ser `sessionId`). */
-export async function undoSessionAction(sessionId: number): Promise<ActionResult> {
-  if (!isSessionId(sessionId)) return { ok: false, error: GENERIC_ERROR };
-  const auth = await getAuth();
-  if (!auth.ok) return { ok: false, error: "No tienes acceso. Vuelve a entrar." };
-
-  const { error } = await auth.ctx.supabase.rpc("undo_last_session", { p_session_id: sessionId });
-  if (error) return { ok: false, error: rpcErrorMessage(error) };
-
-  revalidatePath("/", "layout");
-  return { ok: true, message: "Día desmarcado." };
+export async function reviewCardAction(cardKey: string, result: ReviewResult): Promise<ActionResult> {
+  if (!(await isLocal())) return NOT_LOCAL;
+  if (!isKey(cardKey) || !REVIEW_RESULTS.includes(result)) return INVALID;
+  const now = new Date();
+  const r = reviewCard(getDb(), cardKey, result, todayIn(studyTz(), now), now);
+  if (r.ok) revalidatePath("/", "layout");
+  return r;
 }
 
-export async function signOutAction(): Promise<void> {
-  if (getSupabaseEnv()) {
-    const supabase = await createClient();
-    await supabase.auth.signOut();
+/** Self-graded answer (used when there is no tutor, or the user prefers to grade alone). */
+export async function saveSelfGradeAction(input: {
+  sessionKey: string;
+  kind: "review" | "evaluation";
+  questionIndex: number;
+  answer: string;
+  score: number;
+}): Promise<ActionResult> {
+  if (!(await isLocal())) return NOT_LOCAL;
+  const { sessionKey, kind, questionIndex, answer, score } = input ?? {};
+  if (!isKey(sessionKey) || (kind !== "review" && kind !== "evaluation") || !Number.isInteger(questionIndex)) return INVALID;
+  if (typeof score !== "number" || score < 0 || score > 10) return INVALID;
+  if (typeof answer !== "string" || answer.length > MAX_ANSWER_CHARS) return INVALID;
+  const session = getPlan().byKey.get(sessionKey);
+  if (!session || !questionFor(session, kind, questionIndex)) return { ok: false, error: "Esa pregunta no existe." };
+  saveAnswer(getDb(), { sessionKey, kind, questionIndex, answer, score, feedback: "Autoevaluación." }, new Date());
+  revalidatePath("/progreso");
+  return { ok: true };
+}
+
+export async function saveNoteAction(sessionKey: string, text: string): Promise<ActionResult> {
+  if (!(await isLocal())) return NOT_LOCAL;
+  if (!isKey(sessionKey) || typeof text !== "string" || text.length > 50_000) return INVALID;
+  if (!getPlan().byKey.has(sessionKey)) return { ok: false, error: "Esa sesión no existe." };
+  saveNote(getDb(), sessionKey, text, new Date());
+  return { ok: true };
+}
+
+export async function clearChatAction(sessionKey: string): Promise<ActionResult> {
+  if (!(await isLocal())) return NOT_LOCAL;
+  if (!isKey(sessionKey)) return INVALID;
+  clearChat(getDb(), sessionKey);
+  return { ok: true };
+}
+
+const MAX_BACKUP_BYTES = 20 * 1024 * 1024;
+
+export async function importBackupAction(formData: FormData): Promise<ActionResult> {
+  if (!(await isLocal())) return NOT_LOCAL;
+  const file = formData.get("file");
+  if (!(file instanceof Blob) || file.size === 0) return { ok: false, error: "Elige un archivo .json." };
+  if (file.size > MAX_BACKUP_BYTES) return { ok: false, error: "El archivo es demasiado grande." };
+  let data: unknown;
+  try {
+    data = JSON.parse(await file.text());
+  } catch {
+    return { ok: false, error: "El archivo no es JSON válido." };
   }
-  redirect("/login");
+  const r = importData(getDb(), data);
+  if (r.ok) revalidatePath("/", "layout");
+  return r;
 }
