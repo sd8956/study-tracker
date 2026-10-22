@@ -45,7 +45,7 @@ Una observación importante: **la recursión nunca es más rápida que un bucle*
 
 ### La pila de llamadas en acción
 
-En la sesión anterior viste que cada llamada a función apila un marco con sus variables. Con recursión, la misma función tiene **varios marcos apilados a la vez**, cada uno con su propio valor de `n`. Mira el factorial:
+En la sesión de Big O viste que la pila de llamadas cuenta como memoria: cada llamada a función apila un marco con sus variables. Con recursión, la misma función tiene **varios marcos apilados a la vez**, cada uno con su propio valor de `n`. Mira el factorial:
 
 ```ts
 function factorial(n: number): number {
@@ -71,7 +71,7 @@ fase de ida (apilar)                    fase de vuelta (desapilar)
 
 Cada marco queda "en pausa" esperando el resultado de la llamada de arriba. Cuando el caso base devuelve 1, los marcos se resuelven uno por uno en orden inverso. Esto explica por qué la recursión usa O(n) de memoria aquí: hay `n` marcos esperando al mismo tiempo.
 
-Analogía de las cajas: buscas una llave dentro de una caja que contiene cajas, que contienen más cajas. Con un bucle, mantienes una pila de "cajas por revisar" (como viste en la sesión de pilas). Con recursión, la función "revisar caja" se llama para cada caja interna, y la pila de llamadas lleva la cuenta por ti de dónde ibas. Las dos soluciones hacen lo mismo; la recursiva suele leerse más claro.
+Analogía de las cajas: buscas una llave dentro de una caja que contiene cajas, que contienen más cajas. Con un bucle, mantienes una pila de "cajas por revisar": un array donde agregas al final con `push` y sacas del final con `pop`. Con recursión, la función "revisar caja" se llama para cada caja interna, y la pila de llamadas lleva la cuenta por ti de dónde ibas. Las dos soluciones hacen lo mismo; la recursiva suele leerse más claro.
 
 ### Recursión de cabeza y de cola
 

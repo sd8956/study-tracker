@@ -24,4 +24,4 @@ Cuarto track de DataCamp y el más completo para tu perfil de desarrollador. No 
 
 **Duplicados omitidos:** ninguno respecto a los módulos 08–10. Ojo: varios cursos de este track reaparecen en *Python for Software Engineering*, *Python Programming Toolbox* y *Data Structures and Algorithms in Python*; esos módulos no los repiten.
 
-**Conexión con los libros.** *Data Structures and Algorithms in Python* repasa en Python lo que estudiaste en TypeScript en el módulo 01; aprovecha para comparar.
+**Conexión con los libros.** *Data Structures and Algorithms in Python* es donde aprendes listas enlazadas, pilas, colas y ordenamiento: el módulo 01 los dejó para aquí. Las tablas hash, los heaps y los grafos ya los viste en el módulo 01; aprovecha para comparar.

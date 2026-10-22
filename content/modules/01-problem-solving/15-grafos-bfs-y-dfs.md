@@ -38,7 +38,7 @@ Muchos problemas que no parecen de grafos lo son. "¿Cuál es la menor cantidad 
 
 ### Representaciones
 
-**Lista de adyacencia:** para cada nodo, la lista de sus vecinos. En TypeScript, un `Map<string, string[]>` es perfecto (fíjate que es una tabla hash: el grafo se apoya en lo que aprendiste dos sesiones atrás).
+**Lista de adyacencia:** para cada nodo, la lista de sus vecinos. En TypeScript, un `Map<string, string[]>` es perfecto (fíjate que es una tabla hash: el grafo se apoya en lo que aprendiste en la sesión anterior).
 
 ```ts
 type Graph = Map<string, string[]>;

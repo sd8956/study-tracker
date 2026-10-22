@@ -2,7 +2,7 @@
 title: Proyecto, set de problemas de entrevista con enfoque escrito
 kind: project
 hours: 3
-sources: Cracking the Coding Interview, cap. VII "Technical Questions" (pp. 72–93) y caps. 1–4, 8 y 10 como inspiración de problemas (pp. 100–123, 142–148, 158–163) | Think Like a Programmer, cap. 8 "Thinking Like a Programmer" (pp. 246–284)
+sources: Cracking the Coding Interview, cap. VII "Technical Questions" (pp. 72–93) y caps. 1, 4, 8 y 10 como inspiración de problemas | Think Like a Programmer, cap. 8 "Thinking Like a Programmer" (pp. 246–284)
 links: LeetCode, para practicar más (opcional) | https://leetcode.com/problemset/ ; NeetCode roadmap | https://neetcode.io/roadmap
 ---
 
@@ -53,17 +53,17 @@ Dadas dos cadenas `a` y `b` del mismo largo, decide si `b` es una rotación de `
 
 *Pista:* ¿qué contiene `a + a`?
 
-### Problema 3: el punto de cruce (listas enlazadas)
+### Problema 3: la racha más larga (tablas hash)
 
-Dos listas enlazadas simples pueden compartir su parte final (a partir de cierto nodo, son el mismo nodo, no solo el mismo valor). Devuelve el primer nodo compartido o `null`. O(a + b) tiempo y O(1) espacio.
+Dado un array desordenado de enteros (con duplicados y negativos), devuelve la longitud de la secuencia más larga de valores consecutivos que aparecen en él, sin importar su posición (`[100, 4, 200, 1, 3, 2, 2]` → 4, por `1, 2, 3, 4`). O(n) tiempo; ordenar no cumple el requisito.
 
-*Pista:* si las listas tuvieran la misma longitud, ¿cómo las recorrerías? ¿Cómo logras que la tengan?
+*Pista:* con todos los valores en un `Set`, ¿desde qué números vale la pena empezar a contar una racha?
 
-### Problema 4: cola con máximo (pilas y colas)
+### Problema 4: mezclar k listas ordenadas (heaps)
 
-Diseña una cola con `enqueue`, `dequeue` y `max()`, las tres en O(1) amortizado.
+Recibes `k` arrays ordenados con `N` elementos en total. Devuelve un único array ordenado con todos ellos en O(N log k) tiempo, sin concatenar y ordenar.
 
-*Pista:* recuerda la cola con dos pilas y la pila con mínimo de la sesión 08.
+*Pista:* en cada momento, el siguiente elemento del resultado es el menor entre las cabezas actuales de los `k` arrays. ¿Qué estructura de la sesión 13 te da ese mínimo rápido?
 
 ### Problema 5: el ancestro común (árboles)
 
@@ -83,7 +83,7 @@ Un mensaje de letras se codificó como dígitos con `a = 1`, `b = 2`, …, `z = 
 
 *Pista:* el estado es la posición en el string; en cada paso puedes consumir uno o dos dígitos, con condiciones.
 
-### Problema 8: buscar en un array rotado (ordenamiento y búsqueda)
+### Problema 8: buscar en un array rotado (búsqueda binaria)
 
 Un array ordenado de números distintos fue rotado un número desconocido de posiciones (`[15, 16, 19, 20, 25, 1, 3, 4, 5, 7, 10, 14]`). Encuentra la posición de un valor en O(log n).
 
@@ -93,7 +93,7 @@ Un array ordenado de números distintos fue rotado un número desconocido de pos
 
 1. Crea `SUMMARY.md` en la carpeta del proyecto con una tabla: problema, categoría, minutos, ¿usaste pista?, Big O final, técnica de optimización que funcionó.
 2. Identifica tus dos categorías más débiles (más tiempo o más pistas) y escribe tres problemas adicionales que vas a resolver de esas categorías durante el repaso de la próxima semana.
-3. Actualiza tu `MASTER-PLAN.md` de la sesión 23 con cualquier error nuevo que hayas detectado.
+3. Actualiza tu `MASTER-PLAN.md` de la sesión 22 con cualquier error nuevo que hayas detectado.
 
 ### Criterio de terminado
 

@@ -24,7 +24,7 @@ Cuando la estructura es recursiva, la solución recursiva prácticamente se escr
 
 ### Recursión sobre listas enlazadas
 
-Usaremos el mismo nodo de la sesión de listas:
+Un nodo de lista enlazada guarda un valor y una referencia al nodo siguiente (`null` al final de la lista):
 
 ```ts
 interface ListNode { value: number; next: ListNode | null }
@@ -149,7 +149,7 @@ Con el árbol de ejemplo:
 | Inorden | 1, 3, 4, 6, 7, 8, 10, 14 | en un árbol binario de búsqueda, produce los valores **ordenados** |
 | Postorden | 1, 4, 7, 6, 3, 14, 10, 8 | liberar o borrar (los hijos antes que el padre), calcular tamaños |
 
-El inorden ordenado no es casualidad: el árbol de ejemplo es un **árbol binario de búsqueda** (todo lo de la izquierda es menor y todo lo de la derecha es mayor). Lo estudiarás a fondo en la sesión de árboles. Observa también que `countNodes`, `height` y `maxValue` son en realidad recorridos en postorden: necesitan la respuesta de los hijos antes de calcular la propia.
+El inorden ordenado no es casualidad: el árbol de ejemplo es un **árbol binario de búsqueda** (todo lo de la izquierda es menor y todo lo de la derecha es mayor). Volverás a él en la sesión 13, al compararlo con las tablas hash y los heaps. Observa también que `countNodes`, `height` y `maxValue` son en realidad recorridos en postorden: necesitan la respuesta de los hijos antes de calcular la propia.
 
 ### Un caso real: tamaño de una carpeta
 
@@ -233,7 +233,7 @@ Argumentos **a favor**:
 
 Una regla práctica: si el problema tiene una sola "rama" por paso (recorrido lineal), prefiere un bucle. Si tiene varias ramas o la estructura es jerárquica, prefiere recursión, salvo que la profundidad pueda ser enorme.
 
-Y recuerda: **todo algoritmo recursivo se puede escribir de forma iterativa** con una pila explícita, como viste en la sesión de pilas. Si la recursión es cómoda pero la profundidad te preocupa, primero escríbela recursiva (para que sea correcta) y después conviértela.
+Y recuerda: **todo algoritmo recursivo se puede escribir de forma iterativa** con una pila explícita: un array donde guardas el trabajo pendiente con `push` y lo retomas con `pop`. Si la recursión es cómoda pero la profundidad te preocupa, primero escríbela recursiva (para que sea correcta) y después conviértela.
 
 ### Tres formas de pensar un problema recursivo
 
