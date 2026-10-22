@@ -1,5 +1,5 @@
 ---
-title: "DDD V: hacer explícitos los conceptos implícitos, Specification y diseño flexible"
+title: "DDD IV: hacer explícitos los conceptos implícitos, Specification y diseño flexible"
 kind: lesson
 hours: 2
 sources: Domain-Driven Design (Evans), parte III, introducción y cap. 8 "Breakthrough" (pp. 133–144) | Domain-Driven Design (Evans), cap. 9 "Making Implicit Concepts Explicit" (pp. 145–169) | Domain-Driven Design (Evans), cap. 10 "Supple Design" (pp. 170–206)

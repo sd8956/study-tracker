@@ -1,5 +1,5 @@
 ---
-title: "DDD III: entidades, value objects, servicios de dominio y módulos"
+title: "DDD II: entidades, value objects, servicios de dominio y módulos"
 kind: lesson
 hours: 2
 sources: Domain-Driven Design (Evans), cap. 5 "A Model Expressed in Software" (pp. 60–87)
@@ -281,6 +281,8 @@ Las entidades se definen por su identidad, que persiste mientras sus atributos c
    R: Un modelo con entidades que solo tienen datos y getters/setters, y toda la lógica en servicios procedurales. Se evita poniendo las reglas y la protección del estado en las entidades y value objects, y creando servicios de dominio solo para operaciones que no pertenecen a ningún objeto.
 7. ¿Por qué no conviene organizar el dominio en carpetas `entities/`, `value-objects/` y `services/`?
    R: Porque separa elementos que están conceptualmente unidos y no comunica nada sobre el dominio. Los módulos deben agruparse por conceptos del negocio, con nombres del lenguaje ubicuo, bajo acoplamiento y alta cohesión.
+8. ¿Qué gana un sistema al modelar el dinero como un value object `Money` en lugar de usar `number`?
+   R: El monto y la moneda viajan juntos como un todo conceptual; el objeto es inmutable, así que se puede compartir sin riesgo; las reglas viven en un solo lugar (no mezclar monedas, redondear a centavos enteros para evitar errores de coma flotante) y las operaciones devuelven otro `Money`, de modo que se encadenan sin perder esas garantías. Con `number` cada función tendría que recordar la moneda y repetir las validaciones, y nada impediría sumar pesos con dólares.
 
 ## Ejercicio
 

@@ -1,8 +1,8 @@
 ---
-title: "Integración: del requisito al código, un caso completo y el mapa del módulo"
+title: "Integración: de la conversación con el negocio al código, un caso completo y el mapa del módulo"
 kind: lesson
 hours: 3
-sources: Clean Architecture, cap. 33 "Case Study: Video Sales" (pp. 220–224) | Clean Architecture, cap. 25 y cap. 34 (pp. 174–180, 225–240) | Domain-Driven Design (Evans), cap. 17 "Bringing the Strategy Together" (pp. 339–348) | Systems Analysis and Design 9.ª ed., cap. 10, "Systems Design Completion" (pp. 507–510)
+sources: Clean Architecture, cap. 33 "Case Study: Video Sales" (pp. 220–224) | Clean Architecture, cap. 25 y cap. 34 (pp. 174–180, 225–240) | Domain-Driven Design (Evans), cap. 17 "Bringing the Strategy Together" (pp. 339–348)
 ---
 
 ## Objetivo
@@ -13,7 +13,7 @@ Integrar todo el módulo en un solo razonamiento: partir de actores y casos de u
 
 ### Por qué una sesión de integración
 
-En las 34 sesiones anteriores viste las piezas por separado: paradigmas, patrones, SOLID, componentes, análisis y modelado, DDD táctico y estratégico, Clean Architecture. En un proyecto real no aparecen por separado: aparecen todas a la vez, en una secuencia de decisiones. Esta sesión recorre esa secuencia con dos casos: el **caso de estudio de Martin** (venta de videos) y un **recorrido completo** con el sistema de la clínica veterinaria que has ido construyendo.
+En las sesiones anteriores viste las piezas por separado: paradigmas, patrones, SOLID, componentes, DDD táctico y estratégico, Clean Architecture. En un proyecto real no aparecen por separado: aparecen todas a la vez, en una secuencia de decisiones. Esta sesión recorre esa secuencia con dos casos: el **caso de estudio de Martin** (venta de videos) y un **recorrido completo** con el sistema de la clínica veterinaria que has ido construyendo.
 
 ### Caso de estudio de Martin: venta de videos
 
@@ -74,9 +74,9 @@ El diagrama tiene **dos dimensiones de separación**:
 
 Ahora aplica la misma secuencia, pero con todas las herramientas del módulo, al sistema de la clínica (sesiones 21 y 34).
 
-#### 1. Requisitos y actores (sesiones 16–20)
+#### 1. Actores y necesidades (sesión 21)
 
-| Actor | Necesidades principales | Requisitos no funcionales relevantes |
+| Actor | Necesidades principales | Restricciones relevantes |
 | --- | --- | --- |
 | Tutor (cliente) | Agendar citas en línea, recibir recordatorios de vacunas | Disponibilidad en temporada alta (×3 citas) |
 | Recepcionista | Gestionar agenda de ambas sedes, facturar | No ve diagnósticos |
@@ -84,7 +84,7 @@ Ahora aplica la misma secuencia, pero con todas las herramientas del módulo, al
 | Dueña | Reportes de ingresos por sede y veterinario | Tercera sede el próximo año |
 | Sistema de facturación legado | Recibir CSV diario de ventas | No se puede reemplazar todavía |
 
-Fíjate en que cada actor es también una **fuente de cambio** (SRP) y que los requisitos no funcionales ya anticipan decisiones: escalabilidad, seguridad por rol, integración con legado por lotes.
+Fíjate en que cada actor es también una **fuente de cambio** (SRP) y que las restricciones ya anticipan decisiones: escalabilidad, seguridad por rol, integración con el legado por lotes.
 
 #### 2. Lenguaje y contextos (sesiones 22, 27)
 
@@ -103,7 +103,7 @@ Al escuchar a la dueña aparecen palabras con significados distintos: para recep
                                                            └─────────────────────────────┘
 ```
 
-#### 3. Destilación (sesión 28)
+#### 3. Destilación (sesión 27)
 
 - **Core**: Clínica, en particular el **plan preventivo** (qué vacunas y controles tocan, cuándo y por qué). Es lo que hace que los tutores vuelvan.
 - **Soporte**: Agenda (reglas propias de la clínica, pero no diferenciadoras).
@@ -206,9 +206,9 @@ Tan importante como saber aplicar estas ideas es saber cuándo no hace falta. Ma
 
 Y la regla de oro de la sesión 32: implementa los límites **en el punto de inflexión**, cuando la fricción empieza a costar más que construirlos. Observa, mide y decide; no construyas catedrales para un kiosco, pero no construyas un kiosco donde vas a necesitar una catedral.
 
-### Cerrar el diseño: la especificación del sistema
+### Cerrar el diseño: documentación ligera
 
-Shelly y Rosenblatt cierran la fase de diseño con una **especificación de diseño del sistema** que se revisa con los usuarios y la dirección antes de construir: resumen, componentes, entorno, requisitos de implementación, costos y calendario. En un equipo moderno, el equivalente ligero es:
+Antes de construir, conviene dejar por escrito las decisiones para revisarlas con el equipo y con el negocio. No hace falta un documento enorme; el equivalente ligero en un equipo moderno es:
 
 - Un **README de arquitectura** de una o dos páginas con el diagrama de contextos y el diagrama hexagonal de cada uno.
 - Un **glosario** por contexto.
@@ -219,7 +219,7 @@ Y, como dicen tanto Evans como Martin, quien escribe esto **sigue programando**:
 
 ### Analogía de construcción
 
-Este módulo te llevó por todo el proceso de un estudio de arquitectura: la **entrevista con la familia** (requisitos), los **planos de instalaciones** (DFD), los **planos arquitectónicos** (UML, ERD), el **vocabulario común de la obra** (lenguaje ubicuo), la **división en edificios con funciones distintas** (bounded contexts), la decisión de **dónde invertir en acabados de lujo y dónde usar soluciones estándar** (core vs. genérico), la **estructura que separa lo permanente de lo cambiante** (Clean Architecture) y los **componentes prefabricados con nombre** (patrones). Un buen arquitecto no aplica todas las técnicas a una caseta de jardín, pero sabe cuándo el proyecto ha crecido lo suficiente como para necesitarlas.
+Este módulo te llevó por todo el proceso de un estudio de arquitectura: la **conversación con la familia** (triturar conocimiento), el **vocabulario común de la obra** (lenguaje ubicuo), la **división en edificios con funciones distintas** (bounded contexts), la decisión de **dónde invertir en acabados de lujo y dónde usar soluciones estándar** (core vs. genérico), la **estructura que separa lo permanente de lo cambiante** (Clean Architecture) y los **componentes prefabricados con nombre** (patrones). Un buen arquitecto no aplica todas las técnicas a una caseta de jardín, pero sabe cuándo el proyecto ha crecido lo suficiente como para necesitarlas.
 
 ### Errores comunes en la integración
 
@@ -232,7 +232,7 @@ Este módulo te llevó por todo el proceso de un estudio de arquitectura: la **e
 
 ### Resumen
 
-El caso de venta de videos muestra la secuencia: identificar actores (fuentes de cambio por SRP) y casos de uso, partir los componentes por actor y por nivel, orientar las dependencias hacia las políticas de más alto nivel (regla de dependencia, OCP) y dejar abierta la forma de desplegar. El recorrido de Huellitas integra requisitos, lenguaje, contextos, destilación, modelo táctico, arquitectura hexagonal y patrones en un mismo razonamiento. Los principios se repiten a cada escala (SRP/CCP/contextos, ISP/CRP, DIP/SDP+SAP/regla de dependencia), y una lista de verificación permite revisar cualquier arquitectura real, recordando que la cantidad de estructura debe ser proporcional al problema y que los límites se implementan en el punto de inflexión.
+El caso de venta de videos muestra la secuencia: identificar actores (fuentes de cambio por SRP) y casos de uso, partir los componentes por actor y por nivel, orientar las dependencias hacia las políticas de más alto nivel (regla de dependencia, OCP) y dejar abierta la forma de desplegar. El recorrido de Huellitas integra actores, lenguaje, contextos, destilación, modelo táctico, arquitectura hexagonal y patrones en un mismo razonamiento. Los principios se repiten a cada escala (SRP/CCP/contextos, ISP/CRP, DIP/SDP+SAP/regla de dependencia), y una lista de verificación permite revisar cualquier arquitectura real, recordando que la cantidad de estructura debe ser proporcional al problema y que los límites se implementan en el punto de inflexión.
 
 ## Conceptos clave
 

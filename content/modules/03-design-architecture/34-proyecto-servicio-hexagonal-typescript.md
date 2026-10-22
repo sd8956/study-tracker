@@ -14,7 +14,7 @@ Construir de punta a punta un servicio pequeño con arquitectura hexagonal (Clea
 
 ### El servicio: agenda de citas de Huellitas
 
-Retomas la clínica veterinaria del proyecto de la sesión 21, ahora como código. El servicio gestiona **citas**:
+Retomas la clínica veterinaria del proyecto de la sesión 21, ahora como un servicio completo con puertos y adaptadores. El servicio gestiona **citas**:
 
 - **Agendar una cita** para una mascota con un veterinario en una sede, en un horario de 20 minutos (las cirugías no se agendan por este servicio).
 - **Reglas**: un veterinario no puede tener dos citas que se solapen, **aunque sean en sedes distintas**; solo se agenda dentro del horario de atención del veterinario en esa sede ese día; no se agenda en el pasado; una mascota no puede tener dos citas activas el mismo día.
