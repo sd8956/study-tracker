@@ -26,13 +26,13 @@ Branch: `feat/compress-route` · Delivery: ask-on-risk · Test runner: vitest (`
 
 | ID | Specs | Route | Status | Commit |
 | --- | --- | --- | --- | --- |
-| T1 | S2 plan order + content test | inline | pending | — |
-| T2 | S4–S6 module 01 + 16-dsa-python/01 | delegated (parallel unit W01) | pending | — |
-| T3 | S4–S6 module 02 | delegated (parallel unit W02) | pending | — |
-| T4 | S4–S6 module 03 | delegated (parallel unit W03) | pending | — |
-| T5 | S4–S6 modules 04 + 05 | delegated (parallel unit W45) | pending | — |
-| T6 | S4–S6 modules 06 + 07 | delegated (parallel unit W67) | pending | — |
-| T7 | all: docs, README, seam check | inline | pending | — |
+| T1 | S2 plan order + content test | inline | done (RED → GREEN) | 04814fa |
+| T2 | S4–S6 module 01 + 16-dsa-python/01 | delegated (parallel unit W01) | done | df9e504 |
+| T3 | S4–S6 module 02 | delegated (parallel unit W02) | done | f363923 |
+| T4 | S4–S6 module 03 | delegated (parallel unit W03) | done | 6361235 |
+| T5 | S4–S6 modules 04 + 05 | delegated (parallel unit W45) | done | 2e194ec |
+| T6 | S4–S6 modules 06 + 07 | delegated (parallel unit W67) | done | f31f433 |
+| T7 | all: docs, README, seam check | inline | done (457 tests, typecheck, lint) | 162c112 |
 
 Route evidence: T2–T6 are independent content units with disjoint edit surfaces (`content/modules/NN-*/**`). Each rewrites several merged sessions (well over 100 lines), so the Writer trigger (a) parallelism holds. T1 and T7 are small and run inline.
 
@@ -43,3 +43,5 @@ Route evidence: T2–T6 are independent content units with disjoint edit surface
 - **L3 (diagnostic):** Self-ratings (0–3), each 2–3 verified with an applied exercise. 01: A2 B2 C2 D1 E0 F1 G0 H0 I0; the Luhn test showed A as partial. 02: A3 B3 C3 D2 E2 F2 G3 H3 I3. The code review missed SQL injection, partial failure, SRP, the flag argument and test doubles; the estimation scenario missed scope negotiation and ranges. 03: A1 B1 C1 D1 E2 F1 G2 H2 I2 J1; the SOLID/DDD test passed S and bounded contexts, and was partial on DIP/ISP, aggregate boundaries and value objects. 04–07: 1 everywhere.
 - **L4 (2026-10-22, user, verbatim):** "aplica todos los recortes".
 - **L5 (decision):** The user has progress on `01-problem-solving/01-estrategias-para-resolver-problemas` (completed, 6 cards, answers, notes). That file stays untouched, and 01-02 stays as the review session. The remaining study load equals the planned 01+02 merge. Other keys hold no progress, so renaming the merged files is safe.
+- **L6 (2026-10-22, result):** The book modules went from 394 to 355 session files across modules 01–17 (books 185 → 146), and from 857 to 787 hours. The whole route went from 533 to 494 sessions. The new order is books → DataCamp → Scrimba → Cloud, so DataCamp starts on Día 132, Scrimba on Día 275 and Cloud on Día 356. Two out-of-scope consistency fixes went into DataCamp 11 (s15 step 3 and module.md), because they pointed at the deleted TS linked list from 01. No course content was cut. Writers also flagged that PACELC now lives only as an inline definition in 05-17, and that consistent hashing rests on 04-14 + 05-17. RDD assess over d38dd34..HEAD: medium, review_due false (under_budget), so no native review ran.
+
