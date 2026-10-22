@@ -34,7 +34,7 @@ El catálogo usa códigos: C (comentarios), E (entorno), F (funciones), G (gener
 - **E1. Construir requiere más de un paso.** Clonar el repositorio y construir el proyecto debería ser un solo comando. Si hay que instalar cosas a mano, copiar archivos o seguir un ritual, es un olor.
 - **E2. Ejecutar los tests requiere más de un paso.** Debería bastar con un comando (`npm test`) o un botón en el editor.
 
-En un proyecto TypeScript, esto se traduce en un `package.json` con scripts claros (`npm run build`, `npm test`, `npm run lint`), un archivo `.nvmrc` o el campo `engines` con la versión de Node y un README con los pasos mínimos. Lo verás en la sesión 29 como parte del "kit de inicio pragmático".
+En un proyecto TypeScript, esto se traduce en un `package.json` con scripts claros (`npm run build`, `npm test`, `npm run lint`), un archivo `.nvmrc` o el campo `engines` con la versión de Node y un README con los pasos mínimos. Lo verás en la sesión 28 como parte del "kit de inicio pragmático".
 
 ### Funciones (F1–F4)
 
@@ -57,7 +57,7 @@ Esta es la sección más larga. Agrupamos los olores por tema.
 
 **Organización y lectura**
 
-- **G10. Separación vertical.** Variables y funciones se definen cerca de donde se usan (sesión 6).
+- **G10. Separación vertical.** Variables y funciones se definen cerca de donde se usan (sesión 4).
 - **G11. Inconsistencia.** Si haces algo de una forma, hazlo siempre igual. Si una función se llama `processVerificationRequest`, otra parecida no debería llamarse `handleDeletion`.
 - **G12. Desorden.** Constructores vacíos, variables sin usar, funciones que nadie llama, comentarios sin información: todo eso sobra.
 - **G16. Intención oscura.** Expresiones compactas, notación húngara, números mágicos: código que no se entiende a la primera.
@@ -129,7 +129,7 @@ class MoogDiver {
 
 **Condicionales y polimorfismo**
 
-- **G23. Prefiere polimorfismo a if/else o switch.** La regla de "un solo switch" de la sesión 5.
+- **G23. Prefiere polimorfismo a if/else o switch.** La regla de "un solo switch" de la sesión 4.
 - **G28. Encapsula condicionales.** `if (shouldBeDeleted(timer))` se lee mejor que `if (timer.hasExpired() && !timer.isRecurrent())`.
 - **G29. Evita condicionales negativos.** `if (buffer.shouldCompact())` es más fácil que `if (!buffer.shouldNotCompact())`.
 - **G33. Encapsula condiciones de borde.** Los `+1` y `-1` dispersos son fuente de errores. Dales nombre:
@@ -168,9 +168,9 @@ const toCents = (amount: number): Cents => Math.round(amount * 100) as Cents;
 ```
 
 - **G27. Estructura sobre convención.** Una convención ("todos los switch deben tener todos los casos") depende de la disciplina; una estructura (una clase abstracta con métodos abstractos, o una unión discriminada con comprobación `never`) la impone el compilador.
-- **G30. Las funciones hacen una cosa.** (Sesión 5.)
+- **G30. Las funciones hacen una cosa.** (Sesión 4.)
 - **G32. No seas arbitrario.** Si la estructura del código parece arbitraria, otros se sentirán libres de cambiarla. Ten una razón para cómo estructuras el código y que esa razón se vea.
-- **G34. Las funciones descienden un solo nivel de abstracción.** (Sesión 5.)
+- **G34. Las funciones descienden un solo nivel de abstracción.** (Sesión 4.)
 - **G35. Mantén los datos configurables en niveles altos.** Un valor por defecto o de configuración no debería estar enterrado en una función de bajo nivel; exponlo arriba (sesión 13).
 
 **Otros generales**

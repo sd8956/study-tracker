@@ -134,7 +134,7 @@ userRepositoryContract("InMemoryUserRepository", async () => new InMemoryUserRep
 userRepositoryContract("SqliteUserRepository", async () => SqliteUserRepository.inMemory());
 ```
 
-¿Y si no hay un fake disponible? El libro sugiere pedírselo a los dueños de la API o, si no es posible, escribir uno tú mismo envolviendo la API en tu propia interfaz (la frontera limpia de la sesión 9), de modo que el fake sea de **tu** interfaz, que es más pequeña.
+¿Y si no hay un fake disponible? El libro sugiere pedírselo a los dueños de la API o, si no es posible, escribir uno tú mismo envolviendo la API en tu propia interfaz (la frontera limpia de la sesión 7), de modo que el fake sea de **tu** interfaz, que es más pequeña.
 
 ### Stubs: útiles, pero con cuidado
 
@@ -249,11 +249,11 @@ it("completa una sesión", async () => {
   const reviews = { schedule: vi.fn() };
   const service = new CompleteSession(progress, reviews, () => new Date("2026-10-20"));
 
-  await service.execute("02-craft/05-funciones");
+  await service.execute("02-craft/04-nombres-funciones-y-comentarios");
 
-  expect(progress.findByKey).toHaveBeenCalledWith("02-craft/05-funciones");
-  expect(progress.markDone).toHaveBeenCalledWith("02-craft/05-funciones", new Date("2026-10-20"));
-  expect(reviews.schedule).toHaveBeenCalledWith("02-craft/05-funciones", new Date("2026-10-21"));
+  expect(progress.findByKey).toHaveBeenCalledWith("02-craft/04-nombres-funciones-y-comentarios");
+  expect(progress.markDone).toHaveBeenCalledWith("02-craft/04-nombres-funciones-y-comentarios", new Date("2026-10-20"));
+  expect(reviews.schedule).toHaveBeenCalledWith("02-craft/04-nombres-funciones-y-comentarios", new Date("2026-10-21"));
 });
 ```
 
@@ -264,10 +264,10 @@ it("guarda el progreso y programa el primer repaso al día siguiente", async () 
   const reviews = new InMemoryReviewSchedule();
   const service = new CompleteSession(progress, reviews, () => new Date("2026-10-20"));
 
-  await service.execute("02-craft/05-funciones");
+  await service.execute("02-craft/04-nombres-funciones-y-comentarios");
 
-  expect(await progress.isDone("02-craft/05-funciones")).toBe(true);
-  expect(await reviews.dueOn(new Date("2026-10-21"))).toEqual(["02-craft/05-funciones"]);
+  expect(await progress.isDone("02-craft/04-nombres-funciones-y-comentarios")).toBe(true);
+  expect(await reviews.dueOn(new Date("2026-10-21"))).toEqual(["02-craft/04-nombres-funciones-y-comentarios"]);
 });
 ```
 
@@ -279,7 +279,7 @@ En aplicaciones de interfaz, la dependencia más común es la red. En lugar de m
 
 ```ts
 const server = setupServer(
-  http.get("/api/today", () => HttpResponse.json({ english: 60, sessions: [{ key: "02-craft/05-funciones" }] })),
+  http.get("/api/today", () => HttpResponse.json({ english: 60, sessions: [{ key: "02-craft/04-nombres-funciones-y-comentarios" }] })),
 );
 beforeAll(() => server.listen());
 afterEach(() => server.resetHandlers());

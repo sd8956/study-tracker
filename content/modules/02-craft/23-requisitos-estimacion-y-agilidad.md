@@ -93,7 +93,7 @@ El mismo capítulo presenta la **Programación Extrema** (XP) como esencia de la
 | **Medio (equipo)** | Ritmo sostenible, propiedad colectiva del código, integración continua, metáfora (vocabulario compartido) |
 | **Interior (técnico)** | Pair programming, diseño simple, refactoring, TDD |
 
-Fíjate cuántas ya conoces: diseño simple y refactoring (sesión 14), TDD (sesiones 19–20), integración continua (sesión 29), vocabulario compartido (glosario y nombres).
+Fíjate cuántas ya conoces: diseño simple y refactoring (sesión 14), TDD (sesión 19), integración continua (sesión 28), vocabulario compartido (glosario y nombres).
 
 El capítulo también critica los falsos agilismos: hacer dailies, sprints y retrospectivas no te hace ágil si entregas funcionalidades enormes, no entregas nada cada sprint, resistes el cambio o acumulas conocimiento en una persona. **La agilidad es una forma de pensar, no una lista de ceremonias.**
 

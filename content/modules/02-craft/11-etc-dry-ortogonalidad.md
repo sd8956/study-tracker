@@ -97,7 +97,7 @@ Una heurística práctica: antes de extraer código repetido, pregúntate **"si 
 
 ### Duplicación en la documentación
 
-Los comentarios que repiten lo que hace el código son duplicación: cuando el código cambia, el comentario queda desactualizado (la sesión 6 ya lo mostró). El libro da un ejemplo de una función con un comentario que describe exactamente sus pasos: si cambian las reglas, hay que actualizar dos cosas. Mejor un nombre de función claro y, si hace falta, un comentario que explique el porqué.
+Los comentarios que repiten lo que hace el código son duplicación: cuando el código cambia, el comentario queda desactualizado (la sesión 4 ya lo mostró). El libro da un ejemplo de una función con un comentario que describe exactamente sus pasos: si cambian las reglas, hay que actualizar dos cosas. Mejor un nombre de función claro y, si hace falta, un comentario que explique el porqué.
 
 ### Duplicación en los datos
 

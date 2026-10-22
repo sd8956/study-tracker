@@ -66,13 +66,13 @@ El libro enumera varios beneficios, y la mayoría no tienen que ver con encontra
 
 **4. Beneficios psicológicos y culturales.** El review refuerza que el código pertenece al equipo y no al autor. También ofrece validación: incluso los ingenieros más expertos se benefician de que alguien confirme que su cambio tiene sentido. Y amortigua las críticas: en el contexto estructurado del review, las sugerencias se reciben mejor que en un comentario espontáneo.
 
-**5. Compartir conocimiento.** Probablemente el beneficio más infravalorado. El autor aprende de los comentarios del revisor; el revisor aprende cómo funciona otra parte del sistema y técnicas nuevas. A lo largo del tiempo, el review distribuye el conocimiento por el equipo y reduce el factor bus (sesión 3). El Gentleman Book menciona lo mismo: los code reviews y el pair programming reparten el conocimiento entre oficinas y reducen la coordinación necesaria.
+**5. Compartir conocimiento.** Probablemente el beneficio más infravalorado. El autor aprende de los comentarios del revisor; el revisor aprende cómo funciona otra parte del sistema y técnicas nuevas. A lo largo del tiempo, el review distribuye el conocimiento por el equipo y reduce el factor bus (sesión 1). El Gentleman Book menciona lo mismo: los code reviews y el pair programming reparten el conocimiento entre oficinas y reducen la coordinación necesaria.
 
 **6. Registro histórico.** Cada review queda guardado: por qué se hizo un cambio, qué alternativas se discutieron. Es documentación que se puede consultar años después.
 
 ### Buenas prácticas: ser amable y profesional
 
-La primera práctica que menciona el libro es de actitud. Cada comentario de un revisor debe tratarse como una contribución; cada respuesta del autor, también. El revisor no tiene que exigir que el código esté escrito como él lo habría escrito: si el código es correcto, legible y sigue las guías, la preferencia personal del revisor no es razón suficiente para bloquearlo. Al revés, el autor no debe tomarse los comentarios como ataques personales (recuerda de la sesión 3: tú no eres tu código).
+La primera práctica que menciona el libro es de actitud. Cada comentario de un revisor debe tratarse como una contribución; cada respuesta del autor, también. El revisor no tiene que exigir que el código esté escrito como él lo habría escrito: si el código es correcto, legible y sigue las guías, la preferencia personal del revisor no es razón suficiente para bloquearlo. Al revés, el autor no debe tomarse los comentarios como ataques personales (recuerda de la sesión 1: tú no eres tu código).
 
 Algunos patrones de comentario útiles:
 
@@ -95,7 +95,7 @@ El libro es claro: **escribe cambios pequeños**. Como referencia, un cambio "pe
 - Son **más fáciles de revertir** si algo sale mal.
 - Generan **menos conflictos** con el trabajo de otros.
 
-Esto encaja con todo el módulo: pasos pequeños (sesión 9), commits de refactor separados de los de funcionalidad (sesión 14) y tracer bullets (sesión 23). Una funcionalidad grande se entrega como una serie de cambios pequeños que se revisan por separado.
+Esto encaja con todo el módulo: pasos pequeños (sesión 7), commits de refactor separados de los de funcionalidad (sesión 14) y tracer bullets (sesión 23). Una funcionalidad grande se entrega como una serie de cambios pequeños que se revisan por separado.
 
 ### Buenas prácticas: buenas descripciones
 
@@ -186,7 +186,7 @@ El review es una conversación, y el autor también tiene responsabilidades:
 - **Si no estás de acuerdo, explica tu razón** con datos o referencias, y propone una alternativa. "Lo dejé así porque X; si prefieres Y, lo cambio" abre la puerta al acuerdo.
 - **No mezcles en el mismo PR cambios que el revisor no pidió**, porque obligan a revisar todo de nuevo. Si descubres algo más, abre otro PR.
 - **Agradece los comentarios útiles.** Alguien dedicó su tiempo a mejorar tu código.
-- **Si la discusión se alarga**, pasa a una llamada corta y deja escrito en el PR lo que se decidió (el patrón de comunicación del Gentleman Book que viste en la sesión 3).
+- **Si la discusión se alarga**, pasa a una llamada corta y deja escrito en el PR lo que se decidió (el patrón de comunicación del Gentleman Book que viste en la sesión 1).
 
 ### Code review en un proyecto personal
 
