@@ -41,17 +41,17 @@ describe("content/modules", () => {
 });
 
 describe("whole plan", () => {
-  it("loads with unique keys, all 139 cloud sessions, AI book before the AI tracks and cloud blocks interleaved", () => {
+  it("loads with unique keys, all 139 cloud sessions, AI book before the AI tracks and the cloud blocks last", () => {
     const plan = loadPlanFrom(CONTENT);
     const keys = plan.sessions.map((s) => s.key);
     expect(new Set(keys).size).toBe(keys.length);
     expect(plan.sessions.filter((s) => s.kind === "task")).toHaveLength(139);
     const ids = plan.modules.map((m) => m.id);
-    expect(ids.slice(0, 12)).toEqual([
-      "01-problem-solving", "cloud-b1", "02-craft", "cloud-b2", "03-design-architecture", "cloud-b3",
-      "04-data-intensive", "cloud-b4", "05-system-design", "cloud-b5", "06-microservices", "cloud-b6",
+    expect(ids.slice(0, 6)).toEqual([
+      "01-problem-solving", "02-craft", "03-design-architecture", "04-data-intensive", "05-system-design", "06-microservices",
     ]);
     expect(ids.indexOf("07-ai-engineering")).toBe(ids.indexOf("14-associate-ai-engineer") - 1);
-    expect(ids.at(-1)).toBe("17-scrimba-fullstack");
+    expect(ids.indexOf("17-scrimba-fullstack")).toBe(ids.indexOf("cloud-b1") - 1);
+    expect(ids.slice(-6)).toEqual(["cloud-b1", "cloud-b2", "cloud-b3", "cloud-b4", "cloud-b5", "cloud-b6"]);
   });
 });
