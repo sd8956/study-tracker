@@ -14,7 +14,7 @@ Aplicar un proceso repetible para abordar cualquier problema de diseño, en una 
 
 ### Por qué necesitas un proceso
 
-Un problema de diseño es abierto: "diseña un servicio como YouTube" no tiene una respuesta correcta, y el espacio de soluciones es enorme. Sin un proceso, lo habitual es una de dos trampas: saltar de inmediato a dibujar cajas (y diseñar el sistema equivocado) o perderse en un detalle (el algoritmo de ranking) y no llegar nunca a una arquitectura completa.
+Un problema de diseño es abierto: "diseña un servicio como Dropbox" no tiene una respuesta correcta, y el espacio de soluciones es enorme. Sin un proceso, lo habitual es una de dos trampas: saltar de inmediato a dibujar cajas (y diseñar el sistema equivocado) o perderse en un detalle (el algoritmo de ranking) y no llegar nunca a una arquitectura completa.
 
 El libro de Alex Xu cuenta la historia de un alumno que siempre levanta la mano primero para responder, antes de entender la pregunta. En diseño de sistemas, responder rápido sin entender no suma puntos: es una señal de alarma. Un entrevistador (o un colega que revisa tu design doc) evalúa sobre todo **cómo piensas**: si haces las preguntas correctas, si justificas con números, si reconoces trade-offs, si colaboras y si reaccionas bien al feedback. Señales negativas: sobreingeniería por gusto técnico, rigidez, no escuchar, pensar en silencio.
 
@@ -26,7 +26,7 @@ Objetivo: saber **qué** construir antes de pensar **cómo**. En una entrevista 
 
 **Requisitos funcionales**: qué hace el sistema desde el punto de vista del usuario. Lista 3–5, priorizados, y deja explícito qué queda fuera.
 
-**Requisitos no funcionales**: cómo debe comportarse. Disponibilidad (¿cuántos nueves?), latencia (¿p99 objetivo en la operación principal?), consistencia (¿qué datos son CP y cuáles AP?, sesión 07), durabilidad, escala, seguridad, costo.
+**Requisitos no funcionales**: cómo debe comportarse. Disponibilidad (¿cuántos nueves?), latencia (¿p99 objetivo en la operación principal?), consistencia (¿qué datos son CP y cuáles AP?; módulo 04, sesión 19), durabilidad, escala, seguridad, costo.
 
 **Requisitos extendidos** (Karan los llama así): lo que sería bueno tener si sobra tiempo (métricas, analítica, administración).
 
@@ -104,7 +104,7 @@ Ahora eliges, junto con tu interlocutor, 2 o 3 componentes para diseñar en deta
 | Chat | Conexiones persistentes, entrega a usuarios offline, presencia |
 | News feed | Fan-out al publicar vs al leer, celebridades |
 | Rate limiter | Algoritmo y contadores distribuidos sin condiciones de carrera |
-| YouTube | Pipeline de transcodificación, CDN y costos |
+| Ride-hailing (tipo Uber) | Índice geoespacial en memoria, emparejamiento atómico |
 | Google Drive | Sincronización por bloques, conflictos |
 
 Para cada componente: alternativas, trade-offs y una decisión justificada con números. Evita los detalles que no demuestran capacidad de diseño (por ejemplo, el algoritmo exacto de ranking de una red social): consumen tiempo y no muestran nada sobre escalabilidad. En tiempo: de 10 a 25 minutos.

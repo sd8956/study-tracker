@@ -20,7 +20,7 @@ El consejo es directo: **no hay decisiones finales**. En lugar de grabar las dec
 
 ¿Cómo se diseña para eso?
 
-- **Separa las decisiones de su implementación.** Si tu código depende de una interfaz `Repository` en lugar de una base de datos concreta, cambiar de base de datos es escribir un adaptador nuevo, no reescribir la aplicación. Es la idea de ortogonalidad de la sesión 11 y de las fronteras de la sesión 9.
+- **Separa las decisiones de su implementación.** Si tu código depende de una interfaz `Repository` en lugar de una base de datos concreta, cambiar de base de datos es escribir un adaptador nuevo, no reescribir la aplicación. Es la idea de ortogonalidad de la sesión 11 y de las fronteras de la sesión 7.
 - **Arquitectura flexible.** El libro repasa cómo cambiaron las "mejores prácticas" de arquitectura en pocos años: monolitos, cliente-servidor, n capas, microservicios, serverless... y probablemente cambien de nuevo. No puedes saber cuál será la correcta en cinco años, pero puedes hacer que tu código no dependa de ella. Mantén la lógica de negocio fuera del mecanismo de despliegue.
 - **No sigas modas.** Nadie sabe qué pasará en el futuro. Elegir tecnología porque está de moda, sin una razón concreta, es apostar sin saber.
 
@@ -103,7 +103,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
 }
 ```
 
-Fíjate en cómo se juntan varias sesiones: DRY (el tipo sale del esquema), crash early (sesión 8), envolver lo global en una API (sesión 7) y configuración externa (este tema). Además, recibir `env` como parámetro hace la función fácil de probar.
+Fíjate en cómo se juntan varias sesiones: DRY (el tipo sale del esquema), crash early (sesión 7), envolver lo global en una API (sesión 7) y configuración externa (este tema). Además, recibir `env` como parámetro hace la función fácil de probar.
 
 ### Programar es transformar datos
 
@@ -148,7 +148,7 @@ El libro hace una observación profunda: cuando programas así, **los datos deja
 
 Si un paso de la tubería puede fallar, ¿cómo evitas llenar cada paso de comprobaciones? El libro propone dos ideas:
 
-1. **Envolver los valores** en un tipo que indica si son válidos o un error (como el `Result` de la sesión 8). Cada transformación solo actúa si recibe un valor válido; si recibe un error, lo pasa intacto al siguiente paso.
+1. **Envolver los valores** en un tipo que indica si son válidos o un error (como el `Result` de la sesión 7). Cada transformación solo actúa si recibe un valor válido; si recibe un error, lo pasa intacto al siguiente paso.
 2. **Hacer las comprobaciones dentro de las transformaciones**, no entre ellas.
 
 ```ts
@@ -232,7 +232,7 @@ const byModule = groupBy(sessions, (session) => session.key.split("/")[0]);
 
 **Evita las aserciones de tipo innecesarias.** `as` le dice al compilador "confía en mí", y el compilador confía aunque te equivoques. Úsalo solo cuando realmente sabes algo que el compilador no puede saber, y nunca para silenciar un error que no entiendes. El capítulo también advierte sobre usar `any` como atajo: es aceptable solo de forma temporal o para código de terceros sin tipos.
 
-Un aviso honesto sobre el capítulo: algunas explicaciones (por ejemplo, sobre el estrechamiento de tipos dentro de `forEach`) son imprecisas. Contrasta siempre con el manual oficial de TypeScript, una buena práctica pragmática de pensamiento crítico (sesión 2).
+Un aviso honesto sobre el capítulo: algunas explicaciones (por ejemplo, sobre el estrechamiento de tipos dentro de `forEach`) son imprecisas. Contrasta siempre con el manual oficial de TypeScript, una buena práctica pragmática de pensamiento crítico (sesión 1).
 
 ### Juntando las tres ideas
 

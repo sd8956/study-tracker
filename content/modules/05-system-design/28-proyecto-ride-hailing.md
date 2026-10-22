@@ -49,9 +49,59 @@ Dos opciones para enviar y recibir ubicaciones en vivo:
 
 La app del conductor necesita además un mecanismo en segundo plano para seguir enviando GPS aunque no esté en primer plano.
 
+### Índices geoespaciales: lo esencial
+
+"¿Qué conductores hay a menos de 2 km de este punto?" es una **consulta de proximidad**, y un índice normal no la resuelve bien. Un B-tree ordena por una sola dimensión: con un índice en `lat` y otro en `lon`, cada uno devuelve una franja que cruza toda la ciudad (o el planeta) y la base tiene que intersecar dos conjuntos enormes. La solución es convertir las dos dimensiones en **celdas**: dividir el mapa en regiones con un identificador, buscar primero por celda (fase gruesa) y después filtrar los candidatos por distancia real (fase fina).
+
+#### Geohash
+
+Geohash parte el mundo en dos por longitud, luego en dos por latitud, y así alternando; cada corte agrega un bit, y los bits se escriben en base32. El resultado es una cadena donde **cada carácter más estrecha la celda**:
+
+```
+ longitud del geohash →  tamaño aproximado de la celda
+   4                      ~39 km × 20 km
+   5                      ~4,9 km × 4,9 km
+   6                      ~1,2 km × 0,6 km
+ "6gkzw" contiene a "6gkzwd", que contiene a "6gkzwdf"…
+```
+
+Dos puntos con un **prefijo común largo** están cerca, así que "conductores en mi celda" es una búsqueda por prefijo o una igualdad sobre la celda, algo que cualquier hash map o índice resuelve. Eliges la longitud según el radio: para un radio de 1–2 km sirven celdas de 6 caracteres.
+
+El problema clásico son los **bordes**: dos puntos a 50 m pueden caer en celdas vecinas con prefijos muy distintos, y un punto cerca del borde de tu celda tiene vecinos que no comparten tu prefijo. Por eso nunca consultas solo tu celda: consultas **tu celda y sus 8 vecinas**, juntas los candidatos y los filtras por distancia real (con la fórmula de haversine, que calcula distancias sobre la esfera). Si no alcanzan los resultados, acortas el geohash un carácter y repites con celdas más grandes.
+
+```
+ ┌────┬────┬────┐
+ │ NO │ N  │ NE │   1. celda del pasajero + 8 vecinas (fase gruesa)
+ ├────┼────┼────┤   2. reunir conductores de las 9 celdas
+ │ O  │ ●  │ E  │   3. haversine y descartar los que superan el radio (fase fina)
+ ├────┼────┼────┤   4. ordenar por distancia o ETA y quedarte con los mejores
+ │ SO │ S  │ SE │
+ └────┴────┴────┘
+```
+
+Para posiciones en vivo, geohash tiene una virtud enorme: actualizar es barato. Cuando llega una posición, calculas la celda nueva; si coincide con la anterior solo actualizas el punto, y si cambió, sacas al conductor del conjunto de la celda vieja y lo agregas al de la nueva. Son dos operaciones O(1) en memoria (por ejemplo, conjuntos en Redis o un `Map<celda, Set<driverId>>`), con 250.000 actualizaciones por segundo repartidas por ciudad.
+
+#### Quadtree
+
+Un quadtree empieza con un nodo que cubre todo el mapa y lo **divide en cuatro cuadrantes** cuando contiene más de K puntos (por ejemplo, 100). Cada cuadrante se vuelve a dividir si también se llena. El árbol queda profundo en el centro de la ciudad y plano en las afueras: **se adapta a la densidad**, algo que la grilla fija de geohash no hace. Para buscar, bajas desde la raíz hasta la hoja que contiene al pasajero y amplías a hojas vecinas hasta reunir suficientes candidatos.
+
+El costo es que es una estructura **en memoria** que hay que construir, y que mover puntos con frecuencia obliga a sacarlos de una hoja y meterlos en otra, con divisiones y fusiones ocasionales. Con 64 B por conductor, 400.000 conductores ocupan unos 26 MB: cabe holgado en una máquina por ciudad, y tras un reinicio se reconstruye en segundos con las posiciones que los conductores siguen enviando.
+
+#### Cuál elegir
+
+| | Geohash | Quadtree |
+| --- | --- | --- |
+| Estructura | Celdas fijas identificadas por una cadena | Árbol que se divide según la densidad |
+| Actualizar una posición | Muy barato (cambiar de conjunto si cambió la celda) | Más caro (mover entre hojas, dividir o fusionar) |
+| Densidad muy desigual | Celdas del centro saturadas (hot cells) | Se adapta sola |
+| Particionar y cachear | Natural: la celda es la clave | Más difícil |
+| Encaja con | Puntos que se mueven todo el tiempo, sharding por zona | Datos que cambian poco y búsquedas de k vecinos |
+
+Uber usa **H3**, una variante con celdas hexagonales jerárquicas: los hexágonos tienen vecinos a la misma distancia en las seis direcciones, lo que simplifica agregar demanda por zona (precios dinámicos). La idea de fondo es la misma: celda primero, distancia exacta después.
+
 ### Emparejamiento: encontrar conductores cercanos
 
-Opciones para guardar y consultar posiciones (sesión 27):
+Opciones para guardar y consultar posiciones:
 
 - **SQL** con `lat BETWEEN ... AND lon BETWEEN ...`: no escala con grandes volúmenes ni con 250.000 actualizaciones por segundo.
 - **Geohash**: el geohash de cada conductor indexado **en memoria**; los cercanos al pasajero se encuentran comparando prefijos (más las celdas vecinas).
@@ -67,7 +117,7 @@ Opciones para guardar y consultar posiciones (sesión 27):
 - **Precios dinámicos (surge)**: cuando la demanda supera a la oferta en una zona, sube el precio para atraer conductores y moderar la demanda. Se calcula por celda (por ejemplo, hexágonos H3) a partir de solicitudes y conductores disponibles en ventanas cortas.
 - **Pagos**: delegados a un procesador externo (Stripe, PayPal); al completarse, el procesador redirige o notifica y el servicio de pagos registra el resultado. Idempotencia obligatoria (sesión 12).
 - **Notificaciones**: con una cola o broker (Kafka) y FCM/APNs (sesión 21).
-- **Particionado**: sharding de las bases por un criterio como ciudad o región, con consistent hashing (sesiones 06 y 08).
+- **Particionado**: sharding de las bases por un criterio como ciudad o región, con consistent hashing (sesiones 06 y 17).
 - **Cache**: posiciones recientes de pasajeros y conductores en Redis o Memcached con LRU; ante un miss, se va a la base y se repuebla.
 - **Analítica**: eventos de todos los servicios procesados por lotes o en streaming.
 - **Cuellos de botella**: varias instancias por servicio, balanceadores entre capas, réplicas de lectura, cache replicada, y un broker dedicado para orden y entrega de mensajes.
@@ -108,6 +158,10 @@ Proyecto terminado cuando todos los criterios estén al menos en 2 y el prototip
 
 - **Ubicación en vivo**: posiciones efímeras de alta frecuencia que viven en memoria.
 - **Índice geoespacial en memoria**: estructura (geohash, quadtree, H3) que responde "quién está cerca" sin tocar la base.
+- **Geohash**: cadena base32 jerárquica que identifica una celda del mapa; un prefijo común largo indica cercanía.
+- **Celdas vecinas**: la celda del punto y sus 8 vecinas, que se consultan juntas para no perder candidatos en los bordes.
+- **Quadtree**: árbol que divide un cuadrante en cuatro cuando supera K puntos, adaptándose a la densidad.
+- **Fase gruesa y fase fina**: buscar candidatos por celda y filtrarlos después por distancia real (haversine).
 - **Emparejamiento atómico**: asignación de un conductor que no puede repetirse ante solicitudes concurrentes.
 - **Oferta en cascada**: enviar la solicitud a los mejores conductores y pasar a los siguientes si nadie acepta a tiempo.
 - **ETA**: tiempo estimado de llegada según la red vial y el tráfico.
@@ -124,6 +178,11 @@ Proyecto terminado cuando todos los criterios estén al menos en 2 y el prototip
    R: La posición en vivo y el mapa de conductores cercanos son AP: un dato de hace unos segundos es aceptable y la disponibilidad importa más. El estado del viaje, la asignación del conductor y los pagos son CP: no puede haber dos asignaciones ni cobros duplicados o perdidos.
 4. ¿Por qué el ETA no puede calcularse con la distancia en línea recta?
    R: Porque los vehículos circulan por calles con sentidos, giros y tráfico variable; un conductor a 500 m en línea recta puede estar a 10 minutos si debe rodear un río o una autopista. Se necesita un servicio de rutas sobre el grafo vial con tiempos de tráfico en vivo.
+
+5. ¿Por qué una búsqueda de cercanía con geohash consulta 9 celdas y no solo la del pasajero?
+   R: Porque dos puntos muy cercanos pueden quedar a ambos lados del borde de una celda y tener prefijos distintos; si solo se consultara la celda del pasajero, se perderían conductores a pocos metros. Se reúnen los candidatos de la celda y sus 8 vecinas y luego se filtran por distancia real.
+6. ¿Cuándo preferirías un quadtree a un geohash para el índice de conductores?
+   R: Cuando la densidad es muy desigual y importa más buscar los k vecinos que actualizar barato: el quadtree se subdivide donde hay muchos puntos y queda plano donde hay pocos. Para posiciones que cambian cada pocos segundos suele ganar el geohash, porque actualizar es mover al conductor de un conjunto a otro y la celda sirve directamente como clave de partición.
 
 ## Explícalo con tus palabras
 

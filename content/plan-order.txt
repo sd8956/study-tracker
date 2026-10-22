@@ -1,0 +1,28 @@
+# Study order (one module per line). Every module and Cloud block must appear exactly once.
+# Books first, then DataCamp and Scrimba, and the Cloud route last. The AI book goes right before the AI tracks.
+
+01-problem-solving
+02-craft
+03-design-architecture
+04-data-intensive
+05-system-design
+06-microservices
+
+08-python-fundamentals
+09-sql-server-developer
+10-associate-python-developer
+11-python-programmer
+12-python-software-engineering
+13-python-toolbox
+07-ai-engineering
+14-associate-ai-engineer
+15-langchain
+16-dsa-python
+17-scrimba-fullstack
+
+cloud-b1
+cloud-b2
+cloud-b3
+cloud-b4
+cloud-b5
+cloud-b6

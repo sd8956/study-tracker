@@ -147,7 +147,7 @@ it("no abre cuentas a menores de 18", async () => {
 });
 ```
 
-Fíjate en cuánto de esto ya conocías: los puertos son las interfaces de la sesión 9 ("programa contra la interfaz que quieres"), los adaptadores son las fronteras limpias, la regla de los 18 años vive en el objeto que tiene la información (sesión 7) y todo es reversible (sesión 13).
+Fíjate en cuánto de esto ya conocías: los puertos son las interfaces de la sesión 7 ("programa contra la interfaz que quieres"), los adaptadores son las fronteras limpias, la regla de los 18 años vive en el objeto que tiene la información (sesión 7) y todo es reversible (sesión 13).
 
 ### Clean Architecture: capas y regla de dependencia
 

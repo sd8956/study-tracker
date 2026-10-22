@@ -244,7 +244,7 @@ La app corre en el equipo (`127.0.0.1`), sin cuentas. La ruta crece: libros y re
 ### Calendario
 
 - Lunes a viernes: 1 h de inglés + 2 h de ruta. Sábado: 1 h + 3 h. Domingo: descanso.
-- Reparto por horas, en orden: cada día tiene su presupuesto (2 h o 3 h) y una sesión ocupa los días que necesiten sus horas. Las horas hechas hoy (sesiones completadas o "Avancé X h hoy") descuentan del día. Las hechas muestran su fecha; las futuras, la fecha prevista.
+- Reparto por horas, en orden: cada día tiene su presupuesto (2 h o 3 h) y una sesión ocupa los días que necesiten sus horas. Las horas hechas hoy (sesiones completadas o "Avancé X h hoy") descuentan del día. Cada sesión se muestra como "Día N" (su número en toda la ruta); no hay fechas previstas, solo la fecha en que se completó cada sesión.
 
 ### Info architecture
 

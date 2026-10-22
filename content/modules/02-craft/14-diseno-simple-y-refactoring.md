@@ -87,7 +87,7 @@ class EUVacationPolicy extends VacationPolicy {
 **Expresividad.** Es fácil escribir código que entendemos nosotros, porque mientras lo escribimos estamos inmersos en el problema. Quien lo mantenga después no tendrá esa inmersión. La mayor parte del costo de un proyecto de software está en el mantenimiento a largo plazo, así que el código debe expresar claramente la intención de su autor. Herramientas para lograrlo, que ya conoces:
 
 - Buenos nombres (sesión 4).
-- Funciones y clases pequeñas (sesiones 5 y 12).
+- Funciones y clases pequeñas (sesiones 4 y 12).
 - Nomenclatura estándar: si usas un patrón como Command o Visitor, ponlo en el nombre de la clase para que otros lo reconozcan.
 - Tests unitarios bien escritos, que funcionan como documentación por ejemplos.
 
@@ -129,13 +129,13 @@ for (const step of orderedSteps) run(step);
 
 El libro da una lista de prácticas:
 
-- **Sé siempre consciente de lo que haces.** Si no lo eres, terminarás como la rana hervida de la sesión 2.
+- **Sé siempre consciente de lo que haces.** Si no lo eres, terminarás como la rana hervida de la sesión 1.
 - **¿Puedes explicar el código a un programador junior?** Si no puedes, quizá dependes de coincidencias.
 - **No programes con los ojos vendados.** Si construyes una aplicación con una tecnología que no entiendes, es probable que te engañen las coincidencias.
 - **Procede según un plan**, aunque sea un esquema en una servilleta o un comentario.
 - **Confía solo en cosas fiables.** No dependas de suposiciones; si no puedes saber algo, asume lo peor.
-- **Documenta tus suposiciones.** El diseño por contrato (sesión 8) ayuda a aclararlas para ti y para otros.
-- **No pruebes solo tu código: prueba también tus suposiciones.** Escribe una aserción o un test que las verifique (como los learning tests de la sesión 9).
+- **Documenta tus suposiciones.** El diseño por contrato (sesión 7) ayuda a aclararlas para ti y para otros.
+- **No pruebes solo tu código: prueba también tus suposiciones.** Escribe una aserción o un test que las verifique (como los learning tests de la sesión 7).
 - **Prioriza tu esfuerzo.** Dedica tiempo a lo importante, que suele ser lo difícil.
 - **No seas esclavo de la historia.** No dejes que el código existente dicte el código futuro. Todo código se puede reemplazar si ya no es apropiado.
 
@@ -167,7 +167,7 @@ Cuando hayas aprendido algo. Cuando entiendas algo mejor que el año pasado, aye
 
 El libro también usa una metáfora médica: el código que necesita refactoring es como un tumor. Quitarlo requiere cirugía invasiva. Puedes hacerlo ahora, mientras es pequeño, o esperar a que crezca y se extienda, pero entonces será más caro y más peligroso. **Refactoriza pronto, refactoriza a menudo.**
 
-¿Y la presión del calendario? La excusa más común para no refactorizar es "no tenemos tiempo". El consejo del libro: explica a los responsables del proyecto, con la analogía médica si hace falta, que no refactorizar hoy significa una inversión mucho mayor mañana. Y si de verdad no se puede ahora, asegúrate de que quede en el calendario y de que los afectados lo sepan (una "ventana tapada", como en la sesión 2).
+¿Y la presión del calendario? La excusa más común para no refactorizar es "no tenemos tiempo". El consejo del libro: explica a los responsables del proyecto, con la analogía médica si hace falta, que no refactorizar hoy significa una inversión mucho mayor mañana. Y si de verdad no se puede ahora, asegúrate de que quede en el calendario y de que los afectados lo sepan (una "ventana tapada", como en la sesión 1).
 
 ### Cómo refactorizar
 

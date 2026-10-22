@@ -264,7 +264,7 @@ LABEL org.opencontainers.image.revision=$GIT_SHA \
 
 ### 7.3 El pipeline también es superficie de ataque
 
-El pipeline tiene permisos para construir y, a veces, para desplegar. Si alguien compromete una dependencia o un script del pipeline, puede llegar a producción. Mínimos razonables: secretos del CI con el menor privilegio posible, dependencias fijadas (lockfile), imágenes base con versión fijada, y separación entre quien construye (CI) y quien despliega (agente GitOps dentro del cluster). Lo retomarás en la sesión 15.
+El pipeline tiene permisos para construir y, a veces, para desplegar. Si alguien compromete una dependencia o un script del pipeline, puede llegar a producción. Mínimos razonables: secretos del CI con el menor privilegio posible, dependencias fijadas (lockfile), imágenes base con versión fijada, y separación entre quien construye (CI) y quien despliega (agente GitOps dentro del cluster). La seguridad en el diseño la viste en el módulo 05 (sesión 13), y la ruta Cloud, al final del plan, vuelve sobre la seguridad del pipeline.
 
 ### 8. Historia de fallo
 

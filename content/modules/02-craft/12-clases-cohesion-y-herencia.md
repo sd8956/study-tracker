@@ -20,7 +20,7 @@ Martin propone un orden estándar dentro de una clase, inspirado en la convenci�
 3. Variables de instancia privadas (raramente hay buenas razones para variables públicas).
 4. Constructor.
 5. Funciones públicas.
-6. Funciones privadas que usa cada función pública, justo después de ella (la stepdown rule de la sesión 5).
+6. Funciones privadas que usa cada función pública, justo después de ella (la stepdown rule de la sesión 4).
 
 Así, la clase se lee como un artículo de periódico: lo público y conceptual arriba, los detalles abajo.
 
@@ -202,7 +202,7 @@ it("calcula el valor del portafolio", () => {
 });
 ```
 
-Si un sistema está lo bastante desacoplado como para probarse así, también es más flexible y reutilizable. Esta forma de depender de abstracciones y no de detalles es el **principio de inversión de dependencias** (DIP), y es la base de los adaptadores que viste en la sesión 9.
+Si un sistema está lo bastante desacoplado como para probarse así, también es más flexible y reutilizable. Esta forma de depender de abstracciones y no de detalles es el **principio de inversión de dependencias** (DIP), y es la base de los adaptadores que viste en la sesión 7.
 
 ### El impuesto de la herencia
 

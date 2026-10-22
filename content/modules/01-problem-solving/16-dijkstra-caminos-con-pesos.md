@@ -126,7 +126,7 @@ Para pesos negativos se usa **Bellman-Ford**: relaja **todas** las aristas `V �
 
 ### Implementación en TypeScript
 
-La versión más simple busca el nodo más barato recorriendo todos (O(V) por iteración, O(V²) total). Es aceptable para grafos pequeños, pero la versión estándar usa un **min-heap** (cola de prioridad) de la sesión de árboles para obtener el más barato en O(log V).
+La versión más simple busca el nodo más barato recorriendo todos (O(V) por iteración, O(V²) total). Es aceptable para grafos pequeños, pero la versión estándar usa un **min-heap** (cola de prioridad) de la sesión 13 para obtener el más barato en O(log V).
 
 ```ts
 type WeightedGraph = Map<string, Array<[string, number]>>; // nodo → [vecino, peso][]
@@ -165,7 +165,7 @@ export function pathTo(parent: Map<string, string | null>, target: string): stri
 }
 ```
 
-El `PairMinHeap` es tu `MinHeap` de la sesión 14 adaptado para comparar pares por su primer elemento. Detalle de diseño importante: en lugar de implementar una operación "disminuir prioridad" (que exige saber dónde está cada nodo dentro del heap), simplemente **insertamos una entrada nueva** con el costo mejorado y, al sacar entradas viejas, las ignoramos con `if (done.has(node)) continue`. Esta técnica (*lazy deletion*) es más simple y en la práctica igual de rápida.
+El `PairMinHeap` es tu `MinHeap` de la sesión 13 adaptado para comparar pares por su primer elemento. Detalle de diseño importante: en lugar de implementar una operación "disminuir prioridad" (que exige saber dónde está cada nodo dentro del heap), simplemente **insertamos una entrada nueva** con el costo mejorado y, al sacar entradas viejas, las ignoramos con `if (done.has(node)) continue`. Esta técnica (*lazy deletion*) es más simple y en la práctica igual de rápida.
 
 ### La versión sin heap, para entender primero
 

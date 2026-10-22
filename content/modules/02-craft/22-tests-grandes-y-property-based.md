@@ -125,7 +125,7 @@ Pasamos a *The Pragmatic Programmer*. El tema 42 parte de un problema: cuando es
 
 La solución que propone es el **property-based testing** (pruebas basadas en propiedades). En lugar de escribir ejemplos concretos ("para [3, 1, 2] devuelve [1, 2, 3]"), describes **propiedades** que deben cumplirse para cualquier entrada, y una librería genera cientos de entradas aleatorias para intentar romperlas.
 
-El libro conecta esto con el diseño por contrato de la sesión 8: las propiedades son, muchas veces, las postcondiciones e invariantes de la función. Para una función de ordenamiento:
+El libro conecta esto con el diseño por contrato de la sesión 7: las propiedades son, muchas veces, las postcondiciones e invariantes de la función. Para una función de ordenamiento:
 
 - El resultado tiene la **misma longitud** que la entrada.
 - Cada elemento del resultado es **menor o igual** que el siguiente.

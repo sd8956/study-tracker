@@ -31,7 +31,7 @@ En el módulo 04 estudiaste por dentro cada mecanismo de este diseño (replicaci
 
 En un solo servidor, un key-value store es una tabla hash en memoria. Para que quepan más datos: comprimir y mantener en memoria solo lo caliente, con el resto en disco. Pero un servidor se queda chico rápido y es un punto único de fallo. Necesitas una **tabla hash distribuida** (DHT): pares repartidos entre muchos servidores.
 
-Como en todo sistema distribuido, eliges ante particiones (sesión 07). Este diseño, como Dynamo y Cassandra, elige **AP**: seguir aceptando lecturas y escrituras durante particiones y reconciliar después. Un sistema bancario elegiría CP. Lo importante es elegir conscientemente.
+Como en todo sistema distribuido, eliges ante particiones (teorema CAP; módulo 04, sesión 19). Este diseño, como Dynamo y Cassandra, elige **AP**: seguir aceptando lecturas y escrituras durante particiones y reconciliar después. Un sistema bancario elegiría CP. Lo importante es elegir conscientemente.
 
 ### Mapa del diseño
 
@@ -49,7 +49,7 @@ Como en todo sistema distribuido, eliges ante particiones (sesión 07). Este dis
 
 ### Particionado
 
-Las claves se reparten con **consistent hashing** (sesión 08): servidores y claves en un anillo; cada clave pertenece al primer servidor en sentido horario. Con **nodos virtuales**, la carga se reparte de forma pareja, agregar o quitar nodos mueve una fracción pequeña de claves (escalado automático), y los servidores con más capacidad reciben más vnodes (heterogeneidad).
+Las claves se reparten con **consistent hashing** (módulo 04, sesión 14, para el rebalanceo de particiones): servidores y claves se ubican en un anillo según su hash; cada clave pertenece al primer servidor en sentido horario. Con **nodos virtuales**, la carga se reparte de forma pareja, agregar o quitar nodos mueve una fracción pequeña de claves (escalado automático), y los servidores con más capacidad reciben más vnodes (heterogeneidad).
 
 ### Replicación
 
@@ -75,7 +75,7 @@ No hay líder: cualquier réplica acepta lecturas y escrituras. Un nodo **coordi
  W + R ≤ N → consistencia eventual, menor latencia
 ```
 
-Con N=3, W=R=2 toleras un nodo caído en ambas operaciones. Elegir W y R es elegir el punto en la curva latencia/consistencia de PACELC, **por operación** si el sistema lo permite.
+Con N=3, W=R=2 toleras un nodo caído en ambas operaciones. Elegir W y R es elegir el punto entre latencia y consistencia, **por operación** si el sistema lo permite. Es lo que resume PACELC: si hay partición (P), eliges entre disponibilidad (A) y consistencia (C); si no la hay (*else*, E), sigues eligiendo entre latencia (L) y consistencia (C), porque esperar a más réplicas siempre cuesta tiempo.
 
 Modelos de consistencia posibles: fuerte (como si hubiera una sola copia), débil (sin garantías) y **eventual** (todas las réplicas convergen con el tiempo). Dynamo y Cassandra adoptan eventual por defecto: permiten escrituras concurrentes que producen versiones en conflicto, y las reconcilian.
 
@@ -207,7 +207,7 @@ Conclusión: unos 14–16 nodos; el tráfico (no el espacio) es la restricción 
 
 Un diseño así no termina en el diagrama. Para operarlo necesitas:
 
-- **Agregar y quitar nodos** de forma gradual (sesión 08): el nodo nuevo recibe sus rangos con ancho de banda limitado antes de atender lecturas.
+- **Agregar y quitar nodos** de forma gradual: el nodo nuevo recibe sus rangos con ancho de banda limitado antes de atender lecturas.
 - **Compactación** del motor LSM: fusiona SSTables y elimina versiones viejas y borrados; consume I/O y debe programarse para no afectar la latencia. Los borrados se marcan con *tombstones* que deben sobrevivir lo suficiente para propagarse a todas las réplicas; si se eliminan antes de que una réplica caída vuelva, el dato borrado puede "resucitar".
 - **Métricas clave**: latencia p99 por operación y por nodo, tasa de hints pendientes (indica nodos con problemas), progreso de reparaciones, uso de disco (el LSM necesita espacio libre para compactar) y desbalance de carga entre nodos (hot partitions).
 - **Reparaciones periódicas** con anti-entropía, incluso sin fallos detectados, para corregir divergencias silenciosas.
@@ -249,7 +249,7 @@ Un diseño así no termina en el diagrama. Para operarlo necesitas:
 
 ## Ejercicio
 
-Implementa en TypeScript una simulación de un key-value store con 5 nodos en memoria sobre tu `ConsistentHashRing` de la sesión 08: `put`/`get` con N, W y R configurables, versiones con vector clocks que devuelvan las hermanas en caso de conflicto, y un modo de fallo que marque un nodo como caído para probar sloppy quorum con hinted handoff. Escribe pruebas para: lectura consistente con W=R=2; conflicto detectado tras escrituras concurrentes en una partición simulada; y entrega del hint al nodo que vuelve. Terminado cuando las tres pruebas pasen.
+Implementa en TypeScript una simulación de un key-value store con 5 nodos en memoria sobre un `ConsistentHashRing` (si no tienes uno, empieza por él: un arreglo ordenado de posiciones de vnodes, búsqueda binaria de la primera posición mayor o igual al hash de la clave y vuelta al inicio al llegar al final): `put`/`get` con N, W y R configurables, versiones con vector clocks que devuelvan las hermanas en caso de conflicto, y un modo de fallo que marque un nodo como caído para probar sloppy quorum con hinted handoff. Escribe pruebas para: lectura consistente con W=R=2; conflicto detectado tras escrituras concurrentes en una partición simulada; y entrega del hint al nodo que vuelve. Terminado cuando las tres pruebas pasen.
 
 ## Explícalo con tus palabras
 

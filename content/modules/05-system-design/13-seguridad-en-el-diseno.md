@@ -186,7 +186,7 @@ Prevenir no basta: tienes que poder **detectar** y **reconstruir** un incidente.
 
 Muchos sistemas manejan datos personales sujetos a leyes de protección de datos (por ejemplo, el RGPD en Europa o las leyes de habeas data en Latinoamérica) o a normas sectoriales (PCI DSS para tarjetas, normas de salud para historias clínicas). Las consecuencias de diseño más habituales:
 
-- **Residencia de datos**: algunos datos deben permanecer en una región o país; esto condiciona el diseño multi-región (sesión 07, región dueña).
+- **Residencia de datos**: algunos datos deben permanecer en una región o país; esto condiciona el diseño multi-región (por ejemplo, asignar a cada usuario una región dueña de sus datos; módulo 04, sesión 12).
 - **Derecho al olvido**: debes poder borrar los datos de una persona en todos los almacenamientos, incluidos caches, índices de búsqueda, data lakes y, de forma razonable, backups. Diseña desde el inicio un mapa de dónde vive cada dato personal; en logs inmutables o event sourcing, una técnica es cifrar los datos de cada persona con su propia clave y destruir la clave para "borrarlos" (*crypto-shredding*).
 - **Reducción del alcance**: usar un proveedor de pagos que tokeniza las tarjetas saca a casi todo tu sistema del alcance de PCI.
 - **Consentimiento y finalidad**: registrar para qué se usa cada dato y respetar las preferencias del usuario (lo verás en las notificaciones, sesión 21).

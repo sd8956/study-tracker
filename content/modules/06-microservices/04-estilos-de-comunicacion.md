@@ -231,7 +231,7 @@ Los sistemas basados en eventos son elegantes y desacoplados, pero un flujo de n
 
 - Un consumidor con un bug procesa un mensaje, falla, el mensaje vuelve a la cola, se reintenta y falla otra vez, indefinidamente, bloqueando a los demás o consumiendo recursos. Solución: límite de reintentos y una **dead letter queue** (DLQ) donde aparcar mensajes problemáticos para revisarlos.
 - Se pierde el orden: `PedidoCancelado` llega antes que `PedidoCreado`. Solución: no asumir orden global, usar números de versión por entidad o particionar por ID para mantener el orden por entidad.
-- Duplicados: el broker entrega "al menos una vez", así que un mismo evento puede llegar dos veces. Solución: consumidores **idempotentes** (sesión 16) usando el `eventId`.
+- Duplicados: el broker entrega "al menos una vez", así que un mismo evento puede llegar dos veces. Solución: consumidores **idempotentes** (módulo 05, sesión 12) usando el `eventId`.
 
 Empieza con lo simple y adopta comunicación asíncrona donde aporte un beneficio claro. Invierte en observabilidad antes de que el sistema sea difícil de seguir.
 

@@ -143,7 +143,7 @@ La segunda opción separa lo que cambia mucho (la lista de IDs) de lo que cambia
 
 ### Cache distribuida: repartir las claves
 
-Una cache de 300 GB no cabe en un nodo. Las claves se reparten entre nodos, típicamente con **consistent hashing** (sesión 08) para que agregar o quitar un nodo mueva solo una fracción pequeña de claves. Redis Cluster usa 16.384 *hash slots* asignados a nodos; Memcached delega el reparto al cliente.
+Una cache de 300 GB no cabe en un nodo. Las claves se reparten entre nodos, típicamente con **consistent hashing** (sesión 17) para que agregar o quitar un nodo mueva solo una fracción pequeña de claves. Redis Cluster usa 16.384 *hash slots* asignados a nodos; Memcached delega el reparto al cliente.
 
 ### Fallos clásicos y cómo mitigarlos
 

@@ -7,7 +7,7 @@ sources: Clean Code, caps. 1–8 (pp. 32–151) | The Pragmatic Programmer, tema
 
 ## Objetivo
 
-Aplicar en un solo proyecto todo lo de las sesiones 1–9: nombres, funciones, comentarios, formato, objetos frente a estructuras de datos, manejo de errores, contratos, fronteras y recursos. Partes de un pequeño servicio de reservas de salas escrito a propósito de la peor manera posible y lo dejas limpio, sin cambiar su comportamiento y con tests que lo demuestran.
+Aplicar en un solo proyecto todo lo de las sesiones 1, 4 y 7: nombres, funciones, comentarios, formato, objetos frente a estructuras de datos, manejo de errores, contratos, fronteras y recursos. Partes de un pequeño servicio de reservas de salas escrito a propósito de la peor manera posible y lo dejas limpio, sin cambiar su comportamiento y con tests que lo demuestran.
 
 ## Estudio
 
@@ -103,14 +103,15 @@ export function tot(d: string) {
 | Síntoma | Sesión donde se trató |
 | --- | --- |
 | `doIt`, `tot`, `u`, `r`, `h`, `n`, `p`, `st` | 4, nombres |
-| `doIt` valida, busca, calcula precio, guarda, registra y "notifica" | 5, funciones |
-| Flag `f` para el proyector | 5, funciones |
-| Códigos mágicos `null`, `-1`, `-2`, `-3`, `-4` como resultado | 5 y 8, excepciones y `Result` |
-| Comentarios de autoría, redundantes y código comentado | 6, comentarios |
+| `doIt` valida, busca, calcula precio, guarda, registra y "notifica" | 4, funciones |
+| Flag `f` para el proyector | 4, funciones (argumentos flag) |
+| Códigos mágicos `null`, `-1`, `-2`, `-3`, `-4` como resultado | 4 y 7, excepciones y `Result` |
+| Comentarios de autoría, redundantes y código comentado | 4, comentarios |
 | `DB` global mutable y exportado | 7, desacoplamiento |
-| `DB.users.find(...).t` puede reventar con `undefined` | 7 y 8, Demeter y no pasar/devolver `null` |
-| `catch (e) {}` tragándose errores | 8, crash early |
-| `/tmp/booking.log` abierto en `init` y nunca cerrado | 9, recursos |
+| `DB.users.find(...).t` puede reventar con `undefined` | 7, Demeter y no pasar/devolver `null` |
+| `catch (e) {}` tragándose errores | 7, crash early |
+| `/tmp/booking.log` abierto en `init` y nunca cerrado | 7, recursos |
+| `cancel` cambia `b.st` directamente sobre los datos compartidos | 7, no mutar entradas y tell, don't ask |
 | Tipos de usuario `1`, `2`, `9` y estado `"A"`/`"X"` mágicos | 4, nombres y constantes |
 
 ## Qué hacer
@@ -122,7 +123,7 @@ export function tot(d: string) {
    - Renombrar funciones y variables (`doIt` → `createBooking`, `tot` → `dailyRevenue`, etc.).
    - Sustituir números y strings mágicos por constantes o uniones con nombre.
    - Extraer funciones: `findUser`, `findRoom`, `assertWithinOpeningHours`, `isSlotTaken`, `calculatePrice`.
-   - Sustituir el flag `f` por un objeto de opciones `{ withProjector: boolean }` o por un tipo de extra; justifica tu decisión en el commit.
+   - Sustituir el flag `f` por un dato de la reserva (por ejemplo `extras: Extra[]`), no por un modo de la función; justifica tu decisión en el commit.
    - Sustituir los códigos mágicos por un `Result` con errores tipados (`user-not-found`, `room-not-found`, `over-capacity`, `outside-opening-hours`, `slot-taken`). Los tests de caracterización cambian aquí **solo en la forma de la aserción**, no en qué casos fallan.
    - Sustituir el `DB` global por un repositorio inyectado (`BookingStore` con `findUser`, `findRoom`, `bookingsFor`, `save`) y una implementación en memoria.
    - Mover la regla de cancelación a la entidad o a una función con nombre (`canCancel(booking, user)`), sin choque de trenes.

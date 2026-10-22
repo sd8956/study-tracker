@@ -1,7 +1,7 @@
 ---
 title: Estructuras de datos y algoritmos en Python (Data Structures and Algorithms in Python)
 phase: datacamp
-summary: Vas a implementar y medir en Python las estructuras y algoritmos clásicos y compararlos con tus versiones en TypeScript.
+summary: Vas a implementar y medir en Python las estructuras y algoritmos clásicos del curso, y opcionalmente compararlos con tus tablas hash, heaps y grafos en TypeScript del módulo 01.
 ---
 
 Último elemento de DataCamp en la ruta. El curso ya lo completaste en el módulo 11 (sesiones 15–18), así que aquí no se repite: lo conviertes en práctica deliberada.
@@ -12,7 +12,7 @@ summary: Vas a implementar y medir en Python las estructuras y algoritmos clási
 
 **Lo que haces aquí:**
 
-1. Proyecto: implementar y medir las estructuras y algoritmos del curso en Python y compararlos con tus versiones en TypeScript del módulo 01 — sesión 1.
+1. Proyecto: implementar y medir en Python las estructuras y algoritmos del curso; como extensión opcional, comparar con lo que construiste en TypeScript en el módulo 01 (tabla hash, heap y grafos) — sesión 1.
 2. Evaluación de estructuras de datos y algoritmos — sesión 2.
 
 Después de este módulo empieza la fase de Scrimba.

@@ -2,7 +2,7 @@
 title: Proyecto, planificador de rutas en un grafo
 kind: project
 hours: 3
-sources: Grokking Algorithms, caps. 6–7 (pp. 114–159) | Cracking the Coding Interview, cap. 4 "Trees and Graphs" (pp. 112–123) | Think Like a Programmer, cap. 5 "Solving Problems with Classes" (pp. 145–182)
+sources: Grokking Algorithms, caps. 6–7 (pp. 114–159) | Cracking the Coding Interview, cap. 4 "Trees and Graphs" (pp. 112–123)
 links: OpenFlights, datos públicos de rutas aéreas | https://openflights.org/data
 ---
 
@@ -14,7 +14,7 @@ Integrar en una pequeña aplicación de consola en TypeScript todo lo de grafos:
 
 ### Del algoritmo suelto a la herramienta
 
-Hasta ahora escribiste algoritmos como funciones sueltas sobre un `Map`. En un proyecto real, esos algoritmos viven detrás de una **interfaz** que esconde la representación (lección de la sesión de clases). Una buena clase `Graph`:
+Hasta ahora escribiste algoritmos como funciones sueltas sobre un `Map`. En un proyecto real, esos algoritmos viven detrás de una **interfaz** que esconde la representación, igual que tu `HashMap` y tu `MinHeap` de la sesión 13 esconden sus arrays internos. Una buena clase `Graph`:
 
 - Valida al agregar aristas (no hay pesos negativos si vas a usar Dijkstra, los nodos existen).
 - Decide internamente si usa lista o matriz de adyacencia, sin que el resto del programa lo sepa.

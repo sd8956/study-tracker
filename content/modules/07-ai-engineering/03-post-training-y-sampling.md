@@ -158,7 +158,7 @@ async function majorityAnswer(question: string, n = 5): Promise<string> {
 En producción casi siempre necesitas un formato concreto, por dos razones:
 
 1. **La tarea es estructurada**: *semantic parsing*, como texto a SQL, texto a regex o clasificación en clases válidas.
-2. **Otra pieza de software consume la salida**: el correo puede ser libre, pero tu backend espera `{"title": ..., "body": ...}`. En agentes (sesión 14), la salida del modelo es la entrada de una herramienta.
+2. **Otra pieza de software consume la salida**: el correo puede ser libre, pero tu backend espera `{"title": ..., "body": ...}`. En agentes (módulos 14 y 15), la salida del modelo es la entrada de una herramienta.
 
 Hay cinco niveles para conseguirlo, de "curita" a "tratamiento intensivo":
 
@@ -217,7 +217,7 @@ Si le preguntas dos veces a un amigo cuál es la mejor cocina del mundo, respond
 Dos escenarios:
 
 1. **Misma entrada, salidas distintas**. Mitigación: cachear respuestas, fijar temperature/top-p/top-k y la **seed**. Aun así no hay garantía total: el hardware puede introducir diferencias numéricas, y con un proveedor no controlas el hardware. Un ejemplo real: el mismo prompt para calificar un ensayo dio 3/5 una vez y 5/5 la siguiente. Imagina a un profesor que solo califica consistente si se sienta en cierta silla.
-2. **Entrada ligeramente distinta, salida muy distinta** (una mayúscula cambia todo). Más difícil: ayudan prompts cuidadosos (sesión 8) y sistemas de memoria (sesión 14).
+2. **Entrada ligeramente distinta, salida muy distinta** (una mayúscula cambia todo). Más difícil: ayudan prompts cuidadosos (sesión 10) y sistemas de memoria (módulo 15).
 
 #### Alucinación
 
@@ -230,7 +230,7 @@ Lo que puedes hacer como AI engineer hoy:
 
 - Instrucciones del tipo "si no estás seguro, di que no lo sabes".
 - Pedir respuestas **concisas**: menos tokens, menos oportunidades de inventar.
-- **Dar el contexto** con los hechos (RAG, sesiones 11–13) y pedir que responda solo con él, citando.
+- **Dar el contexto** con los hechos (RAG, sesión 11) y pedir que responda solo con él, citando.
 - Detectar y medir alucinaciones en evaluación (sesiones 4–7).
 - Temperatura baja para tareas factuales (reduce variación, no elimina alucinaciones).
 

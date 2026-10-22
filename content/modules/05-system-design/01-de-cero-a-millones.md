@@ -173,7 +173,7 @@ La decisión clave es la **sharding key**: debe repartir los datos de forma pare
 
 | Problema | Descripción | Mitigación típica |
 | --- | --- | --- |
-| Resharding | Un shard se llena o crece desigual; hay que redistribuir | Consistent hashing (sesión 08) |
+| Resharding | Un shard se llena o crece desigual; hay que redistribuir | Consistent hashing (sesión 17; módulo 04, sesión 14) |
 | Celebrity / hotspot | Un shard concentra a usuarios muy populares | Shard dedicado por celebridad, subparticionar |
 | Joins entre shards | No hay joins eficientes entre máquinas | Desnormalizar, hacer el join en la aplicación |
 

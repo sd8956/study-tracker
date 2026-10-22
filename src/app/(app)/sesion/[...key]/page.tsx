@@ -5,7 +5,7 @@ import { BackIcon, ExternalIcon } from "@/components/icons";
 import { Markdown } from "@/components/markdown";
 import { Chip, KindBadge } from "@/components/ui";
 import { loadAppState } from "@/lib/data";
-import { getPlan } from "@/lib/plan";
+import { certificationSession, dayNumber, getPlan } from "@/lib/plan";
 import { sessionHref } from "@/lib/routes";
 import { domainOf, isSafeExternalUrl } from "@/lib/progress";
 import { longDate } from "@/lib/schedule";
@@ -73,10 +73,10 @@ export default async function SesionPage({ params }: { params: Params }) {
       <div className="mt-3 flex flex-wrap gap-2">
         <KindBadge kind={session.kind} />
         <Chip>{session.hours} h</Chip>
+        <Chip>Día {dayNumber(session)}</Chip>
         {status === "done" ? <Chip tone="accent">Hecha · {planned ? longDate(planned.date) : ""}</Chip> : null}
-        {status === "current" ? <Chip tone="accent">Actual · {planned ? longDate(planned.date) : ""}</Chip> : null}
-        {status === "future" && planned ? <Chip>Planeada · {longDate(planned.date)}</Chip> : null}
-        {mod?.block?.certificationDay && session.key === `cloud/b${mod.block.id}-d${mod.block.certificationDay}` ? (
+        {status === "current" ? <Chip tone="accent">Actual</Chip> : null}
+        {mod?.block && certificationSession(plan, mod)?.key === session.key ? (
           <Chip>Certificación {mod.block.certificationCode}</Chip>
         ) : null}
       </div>

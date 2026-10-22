@@ -37,7 +37,7 @@ Cada pieza resuelve un problema y añade otro (latencia, costo, puntos de fallo)
 
 ### 2. Paso 1: mejorar el contexto
 
-Es la primera ampliación casi siempre: dar al modelo la información para cada consulta (RAG de texto, imágenes o tablas; herramientas como búsqueda web, noticias o calendario). Es el feature engineering de los foundation models (sesiones 11–14). Los proveedores ofrecen subida de archivos y herramientas, pero con límites (cuántos documentos, qué tipos, qué algoritmo de retrieval, tamaño de chunk, si las herramientas se ejecutan en paralelo). Una solución propia te da control a cambio de trabajo.
+Es la primera ampliación casi siempre: dar al modelo la información para cada consulta (RAG de texto, imágenes o tablas; herramientas como búsqueda web, noticias o calendario). Es el feature engineering de los foundation models (sesión 11; los agentes, en los módulos 14 y 15). Los proveedores ofrecen subida de archivos y herramientas, pero con límites (cuántos documentos, qué tipos, qué algoritmo de retrieval, tamaño de chunk, si las herramientas se ejecutan en paralelo). Una solución propia te da control a cambio de trabajo.
 
 ### 3. Paso 2: guardrails
 
@@ -160,7 +160,7 @@ export async function cachedChat(messages: Msg[], opts: { userScope?: string; tt
 
 ### 6. Paso 5: patrones de agente
 
-Flujos con bucles, paralelismo y condiciones (sesión 14): tras generar, el sistema decide que le falta información, recupera más y vuelve a generar. Y **acciones de escritura** (redactar y enviar correos, hacer pedidos, transferencias), que aumentan mucho la capacidad y el riesgo: añádelas con el máximo cuidado (aprobación humana, mínimo privilegio).
+Flujos con bucles, paralelismo y condiciones (workflows agénticos, módulo 15): tras generar, el sistema decide que le falta información, recupera más y vuelve a generar. Y **acciones de escritura** (redactar y enviar correos, hacer pedidos, transferencias), que aumentan mucho la capacidad y el riesgo: añádelas con el máximo cuidado (aprobación humana, mínimo privilegio).
 
 Cuanto más compleja la arquitectura, más modos de fallo y más difícil depurar. De ahí lo siguiente.
 

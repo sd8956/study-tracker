@@ -14,7 +14,7 @@ Implementar listas enlazadas y pilas en Python y analizar la complejidad de algo
 
 1. Abre *Data Structures and Algorithms in Python* en DataCamp (ver enlaces de la sesión) y completa el capítulo 1 «Work with Linked Lists and Stacks and Understand Big O notation» (~60 min). Haz todos los ejercicios; si uno te bloquea más de 10 minutos, pide la pista, entiende por qué funciona y sigue.
 2. Al cerrar cada capítulo, anota en tu libreta tres ideas clave y una duda (máx. 5 min).
-3. Compara tu implementación de linked list con la versión en TypeScript que hiciste en el módulo 01 y anota dos diferencias (15 min).
+3. Dibuja en papel cómo cambian los punteros al insertar y al borrar un nodo en medio de la lista, y anota por qué cada operación es O(1) u O(n) (15 min).
 4. Cierra DataCamp y tus notas. Responde por escrito las preguntas de repaso sin mirar nada (~15 min); después compara con las respuestas modelo y marca las que fallaste para repasarlas.
 5. Haz la consigna de «Explícalo con tus palabras» en voz alta o por escrito (~5–10 min).
 

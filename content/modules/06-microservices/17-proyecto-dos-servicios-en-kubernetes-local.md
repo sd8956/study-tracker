@@ -55,13 +55,15 @@ quotes-lab/
 | Dockerfile multi-stage, tag por commit, usuario no root | 09 |
 | Deployment, Service, labels, comandos y depuración de Pods | 06, 10 |
 | ConfigMap, Secret como archivo, validación de config con zod, probes, SIGTERM | 11 |
+| `securityContext` no root, NetworkPolicy | 11 |
 | Rolling update, `rollout status/undo`, `maxSurge`/`maxUnavailable` | 12 |
+| Degradación con fallback, HPA | 12 |
 | Logs JSON y correlation ID | 14 |
-| Timeout, retry con backoff, fallback | 16 |
+| Timeout, retry con backoff y jitter | módulo 05, sesión 12 |
 
 ### Fragmentos de partida
 
-Cliente resiliente del gateway (complétalo con lo de la sesión 16):
+Cliente resiliente del gateway (complétalo con los patrones de la sesión 12 del módulo 05 y la degradación de la sesión 12):
 
 ```ts
 // services/gateway/src/quotesClient.ts

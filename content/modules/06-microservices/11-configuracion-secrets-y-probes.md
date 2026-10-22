@@ -1,14 +1,14 @@
 ---
-title: Configuración, secrets y health probes en Kubernetes
+title: Configuración, secrets, health probes y NetworkPolicy en Kubernetes
 kind: lesson
 hours: 2
-sources: Hands-On Microservices with Kubernetes, cap. 5 "Configuring Microservices with Kubernetes" (pp. 128–159), cap. 6 "Managing secrets with Kubernetes" (pp. 168–174) y cap. 12 "Self-healing with Kubernetes" (pp. 381–385) | Building Microservices 2nd ed., cap. 8 "Environments" y "Zero-Downtime Deployment" (pp. 285–297)
-links: The Twelve-Factor App — Config | https://12factor.net/config ; Kubernetes — ConfigMaps | https://kubernetes.io/docs/concepts/configuration/configmap/ ; Kubernetes — Liveness, Readiness and Startup Probes | https://kubernetes.io/docs/concepts/configuration/liveness-readiness-startup-probes/
+sources: Hands-On Microservices with Kubernetes, cap. 5 "Configuring Microservices with Kubernetes" (pp. 128–159), cap. 6 "Securing Microservices on Kubernetes" (pp. 160–196: secrets y network policies) y cap. 12 "Self-healing with Kubernetes" (pp. 381–385) | Building Microservices 2nd ed., cap. 8 "Environments" y "Zero-Downtime Deployment" (pp. 285–297)
+links: The Twelve-Factor App — Config | https://12factor.net/config ; Kubernetes — ConfigMaps | https://kubernetes.io/docs/concepts/configuration/configmap/ ; Kubernetes — Liveness, Readiness and Startup Probes | https://kubernetes.io/docs/concepts/configuration/liveness-readiness-startup-probes/ ; Kubernetes — Network Policies | https://kubernetes.io/docs/concepts/services-networking/network-policies/
 ---
 
 ## Objetivo
 
-Separar la configuración del artefacto, elegir entre configuración estática y dinámica, inyectarla con ConfigMaps y Secrets (como variables o archivos), entender las limitaciones de seguridad de los Secrets, y escribir liveness, readiness y startup probes junto con un apagado ordenado en un servicio TypeScript.
+Separar la configuración del artefacto, elegir entre configuración estática y dinámica, inyectarla con ConfigMaps y Secrets (como variables o archivos), entender las limitaciones de seguridad de los Secrets, escribir liveness, readiness y startup probes junto con un apagado ordenado en un servicio TypeScript, y limitar con NetworkPolicies qué Pods pueden hablar entre sí.
 
 ## Estudio
 
@@ -160,7 +160,7 @@ Tipos habituales: `Opaque` (genérico), `kubernetes.io/tls` (certificado y clave
 
 **Lo que un Secret NO es.** Los valores van en **base64**, que es una codificación, no un cifrado: cualquiera que pueda leer el objeto puede decodificarlo con `base64 -d`. Por defecto, además, se guardan en etcd sin cifrar. Para que los Secrets sean razonablemente seguros necesitas:
 
-- **RBAC**: solo quien lo necesita puede leer Secrets en el namespace (sesión 15).
+- **RBAC**: solo quien lo necesita puede leer Secrets en el namespace (un `Role` con `get` sobre `secrets` y un `RoleBinding` a la service account del servicio, nada más).
 - **Cifrado en reposo** de etcd activado.
 - **No guardarlos en Git** en texto plano. Alternativas: Sealed Secrets (cifrados con una clave del cluster, se pueden versionar), External Secrets Operator o el CSI driver de un gestor de secretos (Vault, el gestor de la nube) que los traen desde fuera.
 - **Montarlos como archivos** en lugar de variables cuando sea posible: las variables de entorno se filtran con más facilidad (dumps de errores, `/proc`, procesos hijo, logs que imprimen el entorno).
@@ -333,11 +333,69 @@ export function readSecret(name: string, dir = process.env.SECRETS_DIR ?? "/var/
 
 En local, fuera de Kubernetes, puedes apuntar `SECRETS_DIR` a una carpeta ignorada por Git con archivos de prueba. Así el mismo código funciona en tu máquina y en el cluster.
 
-### 10. Historia de fallo
+### 10. Aislar el tráfico entre Pods: NetworkPolicy
 
-Un equipo añadió a la liveness probe de su servicio de búsqueda una consulta al cluster de Elasticsearch, "para detectar si estamos realmente bien". Un día, Elasticsearch tuvo una pausa de 20 segundos por recolección de basura. Todas las liveness fallaron a la vez, Kubernetes reinició los 12 Pods de búsqueda, y al arrancar todos juntos recalentaron sus caches golpeando Elasticsearch, que volvió a ralentizarse. El ciclo duró 25 minutos. La corrección: liveness solo del proceso, readiness con un timeout generoso y un circuit breaker hacia Elasticsearch (sesión 16).
+Proteger los Secrets no sirve de mucho si cualquier Pod puede llamar a cualquier otro. Y eso es justo lo que pasa por defecto: la red de un cluster es **plana**. Un Pod de `notifications` puede abrir una conexión a la base de datos de `payments`, aunque nunca lo necesite. Es la confianza implícita del perímetro, trasladada al interior del cluster: si un atacante compromete un servicio poco importante (por una dependencia vulnerable, por ejemplo), desde ahí alcanza todo lo demás. La seguridad de aplicación (autenticación entre servicios, JWT, mTLS, zero trust) ya la viste en el módulo 05 (sesión 13); aquí te quedas con la pieza que Kubernetes te da a nivel de red.
 
-### 11. Errores comunes
+Una **NetworkPolicy** declara qué tráfico se permite **hacia** (ingress) o **desde** (egress) un grupo de Pods, que se eligen por labels. Para leerlas bien, retén tres ideas:
+
+- **Se deniega por omisión, no con reglas de "deny".** Mientras ninguna política seleccione a un Pod, ese Pod acepta todo. En cuanto una política lo selecciona para un tipo de tráfico, solo pasa lo que **alguna** política permita de forma explícita; el resto se descarta. Las políticas se suman: no hay orden ni prioridades.
+- **Las aplica el plugin de red, no la API.** Kubernetes acepta el objeto aunque el plugin de red (CNI) del cluster no las soporte, y en ese caso no ocurre nada: ni error ni bloqueo. Antes de confiar en una política en tu cluster local, revisa si su CNI las aplica (con minikube puedes arrancar con `minikube start --cni=calico`) y compruébalo con una prueba real.
+- **Trabajan en capa 3/4.** Filtran por Pod, namespace, IP y puerto. No saben de rutas HTTP ni de la identidad criptográfica de un servicio; para eso está el mTLS de un service mesh (sesión 06). Son una capa más de defensa en profundidad, no la única.
+
+El patrón habitual es **denegar todo el ingress del namespace y abrir excepciones** concretas:
+
+```yaml
+# 1) Sin excepciones, ningún Pod del namespace recibe tráfico
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: { name: default-deny-ingress, namespace: shop }
+spec:
+  podSelector: {}            # {} selecciona todos los Pods del namespace
+  policyTypes: ["Ingress"]   # sin reglas de ingress: no entra nada
+---
+# 2) Excepción: solo orders puede llamar a payments, y solo al puerto 3000
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: { name: payments-from-orders, namespace: shop }
+spec:
+  podSelector: { matchLabels: { app: payments } }
+  policyTypes: ["Ingress"]
+  ingress:
+    - from:
+        - podSelector: { matchLabels: { app: orders } }
+      ports: [{ port: 3000, protocol: TCP }]
+```
+
+Un `from` con `podSelector` solo mira Pods del **mismo** namespace. Para admitir tráfico de otro namespace (el del Ingress controller, por ejemplo) añades un `namespaceSelector`. Ojo con un detalle de YAML: un `namespaceSelector` y un `podSelector` dentro del **mismo** elemento de la lista significan "Pods con esa label en ese namespace" (Y); en dos elementos separados significan "cualquiera de los dos" (O). Un guion de más abre la puerta a todo un namespace.
+
+Cuidados prácticos:
+
+- **El egress rompe el DNS.** Si también deniegas el egress, el Pod deja de resolver nombres como `http://catalog`, porque la consulta al DNS del cluster (puerto 53, UDP y TCP) es tráfico de salida. Toda política de egress restrictiva necesita una excepción para el DNS.
+- **Las labels son la frontera.** La política confía en que solo `orders` lleva `app: orders`. Si cualquiera puede crear Pods en el namespace con esa label, la regla pierde sentido: controla quién despliega en cada namespace.
+- **Empieza por los servicios sensibles.** Pagos, datos personales y bases de datos primero; una política mal escrita sobre todo el cluster deja servicios sin tráfico y parece una caída.
+
+Dos ajustes del propio Pod completan esta defensa mínima, y los usarás en el proyecto de la sesión 17:
+
+```yaml
+spec:
+  automountServiceAccountToken: false   # el servicio no necesita hablar con la API de Kubernetes
+  containers:
+    - name: orders
+      securityContext:
+        runAsNonRoot: true
+        readOnlyRootFilesystem: true      # monta un emptyDir en /tmp si la app escribe ahí
+        allowPrivilegeEscalation: false
+        capabilities: { drop: ["ALL"] }
+```
+
+Sin el token de la API montado, un atacante dentro del container no puede usarlo para listar Secrets; sin root y con el sistema de archivos de solo lectura, tiene mucho menos margen para instalar herramientas o modificar el código.
+
+### 11. Historia de fallo
+
+Un equipo añadió a la liveness probe de su servicio de búsqueda una consulta al cluster de Elasticsearch, "para detectar si estamos realmente bien". Un día, Elasticsearch tuvo una pausa de 20 segundos por recolección de basura. Todas las liveness fallaron a la vez, Kubernetes reinició los 12 Pods de búsqueda, y al arrancar todos juntos recalentaron sus caches golpeando Elasticsearch, que volvió a ralentizarse. El ciclo duró 25 minutos. La corrección: liveness solo del proceso, readiness con un timeout generoso y un circuit breaker hacia Elasticsearch (módulo 05, sesión 12).
+
+### 12. Errores comunes
 
 - Configuración de entorno horneada en la imagen.
 - Leer variables de entorno tarde y sin validar.
@@ -346,6 +404,8 @@ Un equipo añadió a la liveness probe de su servicio de búsqueda una consulta 
 - Liveness probes que comprueban dependencias externas.
 - No manejar SIGTERM y cortar peticiones en cada despliegue.
 - Loguear la configuración completa al arrancar, secrets incluidos.
+- Escribir NetworkPolicies en un cluster cuyo plugin de red no las aplica, y darlas por buenas sin probarlas.
+- Denegar el egress sin dejar pasar el DNS.
 
 ## Conceptos clave
 
@@ -357,6 +417,8 @@ Un equipo añadió a la liveness probe de su servicio de búsqueda una consulta 
 - **Readiness probe**: comprueba si el Pod puede recibir tráfico; si falla, se retira del Service.
 - **Startup probe**: protege el arranque lento antes de evaluar las demás probes.
 - **Graceful shutdown**: dejar de aceptar tráfico y terminar el trabajo en curso al recibir SIGTERM.
+- **NetworkPolicy**: regla que limita qué Pods pueden comunicarse con un grupo de Pods (ingress) o desde él (egress).
+- **Default deny**: política que selecciona todos los Pods de un namespace sin permitir nada, para abrir después solo las excepciones necesarias.
 
 ## Preguntas de repaso
 
@@ -372,10 +434,12 @@ Un equipo añadió a la liveness probe de su servicio de búsqueda una consulta 
    R: Se retira de los Endpoints del Service y deja de recibir tráfico, pero no se reinicia. Con la liveness fallando, el container se reinicia.
 6. Describe un apagado ordenado de un servicio Node en Kubernetes.
    R: Al recibir SIGTERM, el servicio marca la readiness como fallida, espera unos segundos a que se actualicen los endpoints, deja de aceptar conexiones nuevas, termina las peticiones en curso, cierra recursos como la conexión a la base y sale antes de que venza el periodo de gracia.
+7. ¿Qué tráfico acepta un Pod antes y después de que una NetworkPolicy lo seleccione, y por qué una política de egress restrictiva puede romper el descubrimiento por nombre?
+   R: Mientras ninguna política lo selecciona, acepta todo el tráfico. Cuando una política lo selecciona para ingress o egress, solo pasa lo que alguna política permita explícitamente y el resto se descarta. Si se deniega el egress sin una excepción para el DNS del cluster (puerto 53), el Pod ya no puede resolver nombres de Service como `http://catalog`, así que todas sus llamadas fallan.
 
 ## Ejercicio
 
-Amplía el servicio de las sesiones 09–10: añade `config.ts` con validación `zod`, endpoints `/healthz` y `/readyz`, y manejo de SIGTERM. Crea un `ConfigMap` con `GREETING` y `LOG_LEVEL` y un `Secret` con `API_TOKEN`, y consume el ConfigMap como variables y el Secret como archivo montado en `/var/run/secrets/app/API_TOKEN`. Añade startup, liveness y readiness probes al Deployment. Criterio de terminado: (1) borrar la variable `GREETING` del ConfigMap y reiniciar hace que el Pod entre en CrashLoopBackOff con un mensaje claro en `kubectl logs --previous`; (2) durante un `kubectl rollout restart` lanzando `curl` en bucle no aparece ningún error; (3) los logs nunca muestran el valor de `API_TOKEN`.
+Amplía el servicio de las sesiones 09–10: añade `config.ts` con validación `zod`, endpoints `/healthz` y `/readyz`, y manejo de SIGTERM. Crea un `ConfigMap` con `GREETING` y `LOG_LEVEL` y un `Secret` con `API_TOKEN`, y consume el ConfigMap como variables y el Secret como archivo montado en `/var/run/secrets/app/API_TOKEN`. Añade startup, liveness y readiness probes al Deployment. Por último, en un cluster cuyo plugin de red aplique políticas, crea un `default-deny-ingress` en el namespace y una excepción que solo admita tráfico al servicio desde Pods con la label `role: client`. Criterio de terminado: (1) borrar la variable `GREETING` del ConfigMap y reiniciar hace que el Pod entre en CrashLoopBackOff con un mensaje claro en `kubectl logs --previous`; (2) durante un `kubectl rollout restart` lanzando `curl` en bucle no aparece ningún error; (3) los logs nunca muestran el valor de `API_TOKEN`; (4) un Pod temporal de `curlimages/curl` lanzado con `kubectl run` obtiene respuesta solo cuando lleva la label `role: client`.
 
 ## Explícalo con tus palabras
 

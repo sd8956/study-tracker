@@ -103,7 +103,7 @@ Las restricciones de unicidad son comunes: un nombre de usuario o email debe ide
 
 La situación se parece a un lock: cuando un usuario registra un nombre, es como si adquiriera un lock sobre él. La operación se parece mucho a un compare-and-set atómico: asignar el nombre al usuario solo si no está ya tomado.
 
-Problemas parecidos: que el saldo de una cuenta **nunca sea negativo**, no vender más productos de los que hay en almacén, que dos personas no reserven el **mismo asiento** en un vuelo o teatro. Todos necesitan un valor actualizado en el que todos los nodos estén de acuerdo. En la práctica, a veces se pueden tratar estas restricciones de forma más laxa (por ejemplo, si un vuelo se sobrevende, mover a alguien a otro vuelo y compensarlo). En esos casos, la linealizabilidad no es necesaria (sesión 24).
+Problemas parecidos: que el saldo de una cuenta **nunca sea negativo**, no vender más productos de los que hay en almacén, que dos personas no reserven el **mismo asiento** en un vuelo o teatro. Todos necesitan un valor actualizado en el que todos los nodos estén de acuerdo. En la práctica, a veces se pueden tratar estas restricciones de forma más laxa (por ejemplo, si un vuelo se sobrevende, mover a alguien a otro vuelo y compensarlo). En esos casos, la linealizabilidad no es necesaria (lo retoma el repaso de integración de la sesión 25).
 
 Una restricción de unicidad dura, como la que impones con una clave primaria en una base relacional, **sí requiere linealizabilidad**. Otras restricciones como foreign keys o atributos no la requieren necesariamente.
 

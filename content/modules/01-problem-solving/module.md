@@ -10,21 +10,22 @@ Este es el primer módulo de la ruta y la base de todo lo demás. Antes de habla
 
 El módulo no sigue un libro tras otro. Está organizado por temas y mezcla tres fuentes donde tratan lo mismo:
 
-- **Think Like a Programmer** (V. Anton Spraul): estrategias generales de resolución de problemas, descomponer, reducir, seguir el estado, recursión, clases y reutilización. Los ejemplos del libro están en C++; aquí todo se trabaja en TypeScript y los detalles de punteros se reducen a una nota.
-- **Grokking Algorithms** (A. Bhargava): búsqueda binaria, Big O, arrays y listas, recursión, quicksort, tablas hash, grafos, Dijkstra, greedy, programación dinámica y KNN, con intuiciones visuales.
-- **Cracking the Coding Interview, 6.ª ed.** (G. McDowell): Big O a fondo, la técnica para recorrer un problema en una entrevista y los capítulos de estructuras de datos, recursión, programación dinámica, ordenamiento y búsqueda. Sus problemas sirven de inspiración; los enunciados de aquí son propios.
+- **Think Like a Programmer** (V. Anton Spraul): estrategias generales de resolución de problemas, descomponer, reducir, leer restricciones, recursión y reutilización. Los ejemplos del libro están en C++; aquí todo se trabaja en TypeScript y los detalles de punteros se reducen a una nota.
+- **Grokking Algorithms** (A. Bhargava): búsqueda binaria, Big O, recursión, tablas hash, grafos, Dijkstra, greedy, programación dinámica y KNN, con intuiciones visuales.
+- **Cracking the Coding Interview, 6.ª ed.** (G. McDowell): Big O a fondo, la técnica para recorrer un problema en una entrevista y los capítulos de tablas hash, árboles, heaps, tries y grafos, recursión, programación dinámica y búsqueda. Sus problemas sirven de inspiración; los enunciados de aquí son propios.
 
 ## Cómo está construido
 
-1. **Método** (sesiones 01–02): un plan para cualquier problema y práctica con problemas pequeños.
-2. **Costo** (03–04): búsqueda binaria y Big O, para poder comparar soluciones.
-3. **Estructuras lineales** (05–08): arrays, listas enlazadas, clases y tipos abstractos, pilas y colas.
-4. **Recursión y ordenamiento** (09–11) y un **proyecto** de implementación y benchmark (12).
-5. **Búsqueda rápida y jerarquías** (13–14): tablas hash, árboles y heaps.
-6. **Grafos** (15–16) y un **proyecto** de rutas (17).
-7. **Optimización** (18–20): greedy, NP y programación dinámica.
-8. **Técnica de entrevista, KNN y oficio** (21–23) y un **proyecto** de problemas de entrevista (24).
-9. **Evaluación final** del módulo (25).
+1. **Método** (sesiones 01–02): un plan para cualquier problema y un repaso de cómo leer las restricciones y reducir un problema (Luhn con dígitos que llegan de izquierda a derecha).
+2. **Costo** (03): búsqueda binaria y Big O a fondo, para poder comparar soluciones.
+3. **Recursión** (09–10): fundamentos, estructuras recursivas y backtracking.
+4. **Búsqueda rápida y prioridades** (13): tablas hash por dentro, heaps y tries.
+5. **Grafos** (15–16) y un **proyecto** de rutas (17).
+6. **Optimización** (18–20): greedy, NP y programación dinámica.
+7. **Técnica de entrevista, KNN y oficio** (21–22) y un **proyecto** de problemas de entrevista (24).
+8. **Evaluación final** del módulo (25).
+
+Los números de sesión saltan (04–08, 11–12, 14 y 23) porque esas sesiones se fusionaron con otras o se quitaron. Arrays, listas enlazadas, pilas, colas, árboles de búsqueda y ordenamiento básico se estudian en DataCamp (módulo 11, sesiones 15–18), así que aquí no se repiten.
 
 ## Cómo estudiar cada sesión
 
@@ -35,4 +36,4 @@ El módulo no sigue un libro tras otro. Está organizado por temas y mezcla tres
 
 ## Cómo se conecta con el resto
 
-Big O, tablas hash, árboles y grafos reaparecen en el módulo de sistemas intensivos en datos (índices, B-trees, LSM), en diseño de sistemas (caches, particionado, consistent hashing) y al final de la ruta de DataCamp (estructuras de datos y algoritmos en Python). Lo que aprendas aquí en TypeScript lo vas a traducir después a Python.
+Big O, tablas hash, árboles y grafos reaparecen en el módulo de sistemas intensivos en datos (índices, B-trees, LSM), en diseño de sistemas (caches, particionado, consistent hashing) y en la ruta de DataCamp, donde estudias las estructuras lineales y el ordenamiento en Python (módulo 11) y después implementas y mides estructuras y algoritmos en Python (módulo 16), con la opción de compararlos con tus tablas hash, heaps y grafos de este módulo.

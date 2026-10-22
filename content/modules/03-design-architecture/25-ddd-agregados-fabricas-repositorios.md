@@ -1,5 +1,5 @@
 ---
-title: "DDD IV: el ciclo de vida de los objetos de dominio: agregados, fábricas y repositorios"
+title: "DDD III: el ciclo de vida de los objetos de dominio: agregados, fábricas y repositorios"
 kind: lesson
 hours: 2
 sources: Domain-Driven Design (Evans), cap. 6 "The Lifecycle of a Domain Object" (pp. 88–114) | Domain-Driven Design (Evans), cap. 7 "A Cargo Shipping System" (pp. 115–132)
@@ -63,7 +63,7 @@ Una **invariante** es una regla de consistencia que debe cumplirse cada vez que 
 
 El agregado se define **alrededor de las invariantes**: los objetos que deben ser consistentes entre sí **en todo momento** van en el mismo agregado. Evans muestra un ejemplo de órdenes de compra donde dos usuarios editan a la vez líneas distintas del mismo pedido: cada uno, por separado, respeta el límite de aprobación; juntos, lo superan. Si las líneas fueran objetos independientes, nada lo impediría. Al hacer del pedido la raíz y bloquear (o versionar) el agregado completo, la invariante se protege.
 
-Y una consecuencia elegante: el **precio** del producto no forma parte del agregado del pedido (el catálogo cambia por su cuenta), así que la línea **copia** el precio en el momento de la compra. Exactamente lo que viste al normalizar en la sesión 19.
+Y una consecuencia elegante: el **precio** del producto no forma parte del agregado del pedido (el catálogo cambia por su cuenta), así que la línea **copia** el precio en el momento de la compra. No es una duplicación: es un dato distinto, el **precio pactado** en esa venta, que no debe cambiar aunque el catálogo suba mañana.
 
 ```ts
 export class OrderLine {
@@ -133,6 +133,49 @@ Con los años, la comunidad destiló algunas reglas que complementan a Evans:
 | **Referencia a otros agregados por ID** | Evita cargar grafos enormes y deja claro el límite. |
 | **Un agregado por transacción** | Si un caso de uso necesita cambiar dos agregados, probablemente uno de ellos debe reaccionar al evento del otro (consistencia eventual). |
 | **Diseña alrededor de invariantes reales** | No agrupes por "estar relacionados" sino por "deben ser consistentes en el mismo instante". |
+
+#### ¿Entidad interna o agregado propio? El caso del curso y sus inscripciones
+
+La decisión más frecuente al trazar límites es esta: una entidad que "pertenece" a otra, ¿va **dentro** de su agregado o es un **agregado aparte**? Tómalo con un ejemplo. Una academia tiene **cursos** con cupo y precio; los **estudiantes** se inscriben y pueden cancelar. ¿`Enrollment` (inscripción) vive dentro de `Course`?
+
+Hazte tres preguntas, en este orden:
+
+1. **¿Hay una invariante que abarque a las dos?** "Un curso no puede tener más inscripciones activas que su cupo" y "un estudiante no se inscribe dos veces en el mismo curso" solo se pueden garantizar si quien decide ve **todas** las inscripciones activas en el mismo instante. Eso empuja `Enrollment` hacia **dentro** de `Course`.
+2. **¿Tiene la entidad vida propia fuera de la otra?** Si una inscripción solo importa en el contexto de su curso (se crea, se cancela y desaparece con él), es una entidad **interna** con identidad local. Si tuviera su propio ciclo de vida largo (pagos en cuotas, asistencia, calificaciones, certificados) y otras partes del sistema la buscaran directamente, sería candidata a **agregado propio**.
+3. **¿Cuánta concurrencia y cuánto volumen hay?** Un curso de 30 cupos con su lista de inscripciones es pequeño y se carga sin problema. Un curso masivo en línea con 50 000 inscripciones convertiría a `Course` en un cuello de botella: cada inscripción bloquearía el curso entero.
+
+```ts
+// Opción A: Enrollment es una entidad INTERNA del agregado Course
+type StudentId = string;   // el estudiante es OTRO agregado: se referencia por ID, nunca por objeto
+
+class Enrollment {                         // identidad local: solo única dentro de su curso
+  constructor(readonly studentId: StudentId, readonly pricePaid: Money, private active = true) {}
+  get isActive() { return this.active; }
+  cancel() { this.active = false; }
+}
+
+export class Course {
+  private enrollments: Enrollment[] = [];
+  constructor(readonly id: string, readonly capacity: number, private readonly price: Money) {}
+
+  enroll(studentId: StudentId) {
+    const active = this.enrollments.filter((e) => e.isActive);
+    if (active.some((e) => e.studentId === studentId)) throw new Error("El estudiante ya está inscrito");
+    if (active.length >= this.capacity) throw new Error("El curso no tiene cupo");
+    this.enrollments.push(new Enrollment(studentId, this.price));   // copia el precio vigente
+  }
+  cancelEnrollment(studentId: StudentId) {
+    const e = this.enrollments.find((x) => x.isActive && x.studentId === studentId);
+    if (!e) throw new Error("No hay una inscripción activa para ese estudiante");
+    e.cancel();                                   // se cambia SIEMPRE a través de la raíz
+  }
+  get seatsLeft() { return this.capacity - this.enrollments.filter((e) => e.isActive).length; }
+}
+```
+
+Fíjate en tres cosas. El `Student` **no** está dentro: el curso guarda solo su `StudentId`, porque el estudiante tiene su propio ciclo de vida, se comparte entre muchos cursos y meterlo dentro haría que inscribir a alguien bloqueara también su perfil. Nadie de fuera recibe una `Enrollment` para modificarla: se cancela pidiéndoselo a `Course`. Y el precio pagado es un `Money` copiado, no una referencia al precio del curso.
+
+**Opción B, agregado propio.** Si las inscripciones crecen o adquieren vida propia, `Enrollment` pasa a ser raíz de su propio agregado, con `courseId` y `studentId` como referencias por ID. El cupo ya no se puede comprobar dentro de un solo agregado, así que eliges cómo protegerlo: que `Course` lleve solo un **contador de cupos reservados** (pequeño y barato de bloquear) y que la inscripción se cree después de reservar el cupo; o aceptar **consistencia eventual** con una compensación (si dos inscripciones entran a la vez y se pasan del cupo, la última queda en lista de espera). Cuál elegir es una pregunta para el negocio: "¿qué pasa si por un segundo hay 31 inscritos en un curso de 30?". Si la respuesta es "nada grave, avisamos y movemos a lista de espera", la opción B es viable; si es "inaceptable", la invariante manda y el límite debe incluirla.
 
 ### Fábricas
 
@@ -297,6 +340,10 @@ Los agregados agrupan objetos que deben ser consistentes en todo momento, con un
    R: El cliente del repositorio, normalmente la capa de aplicación, porque es quien sabe qué conjunto de cambios forma una unidad de trabajo atómica. El repositorio no debe decidirlo por su cuenta.
 7. ¿Qué haces si un caso de uso necesita modificar dos agregados?
    R: Preguntar si realmente necesitan ser consistentes en el mismo instante. Si no, se modifica uno, se publica un evento de dominio y el otro agregado reacciona después (consistencia eventual). Si sí, quizá el límite del agregado está mal trazado.
+8. En una academia, ¿cuándo pondrías `Enrollment` dentro del agregado `Course` y cuándo como agregado propio? ¿Cómo referencias al estudiante?
+   R: Dentro de `Course` cuando hay invariantes que deben cumplirse en el mismo instante sobre todas las inscripciones (no superar el cupo, no inscribirse dos veces), la inscripción no tiene vida propia fuera del curso y el volumen es pequeño. Como agregado propio cuando tiene un ciclo de vida largo (pagos, asistencia, notas), otras partes la buscan directamente o el volumen haría de `Course` un cuello de botella; entonces el cupo se protege con un contador en `Course` o con consistencia eventual y compensación. En ambos casos el estudiante es otro agregado y se referencia por su ID.
+9. ¿Por qué un agregado debe referenciar a otros agregados por ID y no por objeto?
+   R: Porque así queda claro dónde termina su límite de consistencia: no se cargan grafos enormes al leerlo, no se bloquean otros agregados al modificarlo y nadie puede cambiar otro agregado "de paso" navegando desde este. Si hace falta el otro objeto, se obtiene de su propio repositorio.
 
 ## Ejercicio
 

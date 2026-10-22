@@ -267,7 +267,7 @@ const [ref, para, other] = await embed([
 console.log(cosine(ref, para).toFixed(3), cosine(ref, other).toFixed(3));
 ```
 
-Verás estos embeddings otra vez en la búsqueda vectorial del RAG (sesiones 11–13) y en la deduplicación de datos (sesión 16).
+Verás estos embeddings otra vez en la búsqueda vectorial del RAG (sesión 11) y en la deduplicación de datos (sesión 16).
 
 ### 7. Qué métrica usar
 

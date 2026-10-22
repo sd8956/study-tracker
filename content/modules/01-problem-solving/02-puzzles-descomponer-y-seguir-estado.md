@@ -1,5 +1,5 @@
 ---
-title: Puzzles de código, entrada y estado
+title: Repaso, restricciones y reducción de problemas
 kind: lesson
 hours: 2
 sources: Think Like a Programmer, cap. 2 "Pure Puzzles" (pp. 40–76)
@@ -8,318 +8,254 @@ links: Algoritmo de Luhn (Wikipedia) | https://es.wikipedia.org/wiki/Algoritmo_d
 
 ## Objetivo
 
-Aplicar dividir y reducir a problemas de código pequeños pero tramposos: patrones de salida, procesamiento de entrada carácter por carácter y problemas donde hay que recordar un estado que cambia.
+Repasar cómo leer las restricciones de un problema y usarlas para reducirlo, con foco en el punto que se te escapó en el diagnóstico: validar con Luhn dígitos que llegan de izquierda a derecha, sin conocer la longitud, en una sola pasada y con memoria O(1).
 
 ## Estudio
 
-### Por qué practicar con puzzles "puros"
+### Qué mostró tu diagnóstico
 
-Un puzzle puro es un problema pequeño, con reglas estrictas, que no necesita librerías ni estructuras complicadas: solo variables, bucles, condicionales y aritmética. Parecen ejercicios de principiante, pero son el gimnasio ideal: como las herramientas son mínimas, toda la dificultad está en **el razonamiento**. Si aprendes a descomponer un puzzle de 20 líneas, aprendes a descomponer un sistema de 20.000.
+En el diagnóstico descompusiste bien la fórmula de Luhn: separaste convertir un carácter en dígito, duplicar y restar 9, sumar y comprobar el módulo 10. Esas piezas estaban bien. Lo que faltó fue otra cosa: notar que una restricción del enunciado (los dígitos llegan de izquierda a derecha y no sabes cuántos son) **rompía** una de esas piezas, la que decide qué dígitos duplicar.
 
-La técnica que vas a practicar en toda la sesión es la misma, en tres variantes:
+Esa diferencia es el tema de esta sesión. **Descomponer** responde "¿qué piezas tiene el problema?". **Leer las restricciones** responde "¿qué información tengo, cuándo me llega y qué no se me permite hacer?". Puedes tener todas las piezas correctas y aun así no tener solución, porque una pieza necesita un dato que, por la restricción, todavía no existe en el momento en que lo necesitas.
 
-1. Partir el problema en piezas tan pequeñas que cada una sea trivial.
-2. Resolver cada pieza con un programa pequeño y probarlo.
-3. Ensamblar las piezas, reutilizando el código y, sobre todo, la comprensión que ganaste.
+La sesión 01 ya te dio la técnica general de reducir. Aquí la usas como herramienta de diagnóstico: para encontrar **cuál** restricción es la difícil y para descubrir qué hacer con ella.
 
-Un detalle psicológico importante: si al descomponer sientes que "este paso es demasiado fácil", vas bien. La meta principal es llegar a un programa correcto; la secundaria es llegar rápido. **No** es una meta usar pocos pasos. Subir una colina en línea recta tiene menos pasos que seguir el sendero en zigzag, pero lo más probable es que te agotes a mitad de camino.
+### Las restricciones son parte del problema
 
-### Parte 1: patrones de salida
+Es tentador leer las restricciones como letra pequeña: "detalles que ya veré". Es al revés. En un problema bien planteado, las restricciones son lo que hace que la solución obvia no sirva, y por eso señalan hacia la solución buena. Conviene clasificarlas, porque cada tipo pide una pregunta distinta:
 
-Imagina esta regla artificial: solo puedes usar dos instrucciones de salida, una que imprime un `#` y otra que imprime un salto de línea. Con eso debes dibujar formas. En TypeScript lo simulamos con dos funciones:
+| Tipo de restricción | Ejemplo | Pregunta que te obliga a hacer |
+| --- | --- | --- |
+| De información | "los datos llegan de uno en uno", "no conoces la longitud" | ¿qué necesito saber y en qué momento lo sabré? |
+| De recursos | "una sola pasada", "memoria O(1)", "no puedes modificar la entrada" | ¿cuál es el estado mínimo que debo recordar? |
+| De forma de la entrada | "ordenado", "valores entre 1 y n", "sin duplicados" | ¿qué propiedad me regala el enunciado y qué técnica la aprovecha? |
+| De salida | "devuelve cualquier solución", "en orden", "solo el conteo" | ¿necesito construir la respuesta o solo contarla? |
 
-```ts
-let out = "";
-const hash = () => { out += "#"; };
-const newline = () => { out += "\n"; };
-```
+Las restricciones de información y de recursos **quitan** opciones. Las de forma de la entrada y de salida suelen **dar** opciones: "ordenado" permite descartar mitades, "solo el conteo" permite no guardar las soluciones. Un buen hábito es escribir las restricciones en una lista antes de pensar en el código y marcar al lado de cada una si quita o da.
 
-**Objetivo final:** dibujar un triángulo "de lado", así:
+### Tres preguntas para cada restricción
 
-```
-#
-##
-###
-####
-###
-##
-#
-```
+Antes de diseñar nada, pasa cada restricción por estas tres preguntas:
 
-Intentarlo de una vez suele terminar en bucles con condiciones raras. Mejor **reducir** paso a paso.
+1. **¿Qué solución obvia prohíbe?** Si la respuesta es "ninguna", probablemente no la entendiste o no es importante. Si prohíbe la obvia, ya sabes que tu primera idea va a chocar con ella.
+2. **¿Qué decisión depende de información que llega tarde?** Esta es la que se te escapó. Recorre tu descomposición pieza por pieza y pregunta, para cada decisión, qué datos necesita y si esos datos ya existen cuando la decisión se toma.
+3. **¿Qué propiedad me da gratis?** "Ordenado", "pocos valores posibles", "k pequeño". Cada propiedad de la entrada es una pista.
 
-**Reducción 1: un cuadrado.** 4 filas de 4 `#`. Dos bucles anidados: el externo cuenta filas, el interno imprime los `#` de cada fila.
+La segunda pregunta merece un nombre propio: es buscar **dependencias hacia el futuro**. Si una pieza necesita algo que solo se sabe al final y la entrada no se puede releer, tienes tres salidas: guardar todo hasta el final (si la memoria lo permite), cambiar el orden de lectura (si se puede) o calcular la pieza **para todas las respuestas posibles** del dato que falta y elegir al final. La tercera es la que resuelve Luhn.
 
-```ts
-for (let row = 1; row <= 4; row++) {
-  for (let col = 1; col <= 4; col++) hash();
-  newline();
-}
-```
+### Reducir para encontrar la dificultad real
 
-**Reducción 2: medio cuadrado (triángulo creciente).** La fila `row` tiene `row` hashes. Solo cambia el límite del bucle interno: `col <= row`. Aquí aparece la idea clave del capítulo: **la cantidad de cada fila es una función del número de fila**. Si encuentras esa función, el dibujo sale solo.
+Reducir es quitar una restricción, resolver esa versión y volver a ponerla. Su valor de diagnóstico es este: si quitas una restricción y el problema se vuelve fácil, **esa** restricción es la dificultad. Haz la escalera de versiones de forma explícita, como una tabla, y mira en qué escalón deja de funcionar tu idea.
 
-**Reducción 3: contar hacia abajo contando hacia arriba.** Para el triángulo decreciente, queremos que la fila 1 tenga 4, la fila 2 tenga 3, etc. Con un contador que sube (`row = 1..4`), la cantidad es `5 - row`. En general, para convertir un contador ascendente en uno descendente usas `max + 1 - row`.
+Para Luhn la escalera queda así:
 
-**Ensamblaje: el triángulo de lado.** Tiene 7 filas; las cantidades son 1, 2, 3, 4, 3, 2, 1. ¿Qué función da eso para `row = 1..7`? Mira la tabla:
+| Versión | Qué tienes | Cómo decides qué duplicar | ¿Fácil? |
+| --- | --- | --- | --- |
+| A | El número completo en un array | Recorres desde la derecha: duplicas el 2.º, 4.º, 6.º… | Sí |
+| B | Dígitos de izquierda a derecha, longitud conocida `L` | La posición `i` desde la izquierda está en la posición `L − i` desde la derecha | Sí |
+| C | Dígitos de izquierda a derecha, longitud desconocida | Necesitas `L` y no la tienes hasta el final | No |
 
-| row | 1 | 2 | 3 | 4 | 5 | 6 | 7 |
-| --- | - | - | - | - | - | - | - |
-| row − 4 | −3 | −2 | −1 | 0 | 1 | 2 | 3 |
-| \|row − 4\| | 3 | 2 | 1 | 0 | 1 | 2 | 3 |
-| 4 − \|row − 4\| | 1 | 2 | 3 | 4 | 3 | 2 | 1 |
+Entre B y C solo cambia una cosa: conocer `L`. Ahí está toda la dificultad, y ahora la puedes enunciar con precisión: **la decisión "¿duplico este dígito?" depende de la paridad de la longitud total, que solo conoces cuando termina la entrada.**
 
-La función es `4 - Math.abs(row - 4)`. El valor absoluto convierte una recta que cruza cero en una "V", y restarlo de 4 la invierte en un pico.
+Fíjate en que la tabla te dice además qué **no** es difícil. Convertir caracteres, duplicar, restar 9 y comprobar el módulo 10 funcionan igual en las tres versiones. No hace falta repensarlos: el problema completo se reduce a resolver una sola pregunta.
 
-```ts
-for (let row = 1; row <= 7; row++) {
-  const count = 4 - Math.abs(row - 4);
-  for (let i = 1; i <= count; i++) hash();
-  newline();
-}
-```
+### Luhn con dígitos de izquierda a derecha
 
-La lección no es el valor absoluto. Es el proceso: cuadrado → triángulo → contar al revés → combinar. Cada reducción era trivial y, juntas, resolvieron algo que de frente parecía difícil. Y el truco de **hacer una tabla con el número de fila y la cantidad deseada** sirve para cualquier patrón.
+Recuerda la regla: contando desde la derecha, el último dígito es el verificador y no se duplica; se duplican el segundo, el cuarto, el sexto, etc. Si un duplicado da dos cifras, se suman sus cifras, lo que equivale a restar 9. El número es válido si la suma total es divisible por 10.
 
-### Parte 2: procesar entrada carácter por carácter
+Numera las posiciones desde la izquierda empezando en 0. Con longitud `L`, la posición `i` está en el lugar `L − i` contando desde la derecha, y se duplica si ese lugar es par:
 
-Ahora un problema real: validar un número de identificación con la **fórmula de Luhn**, la que usan las tarjetas de crédito. La regla, explicada con tus palabras:
+- Si `L` es **par**, `L − i` es par cuando `i` es par: se duplican las posiciones 0, 2, 4…
+- Si `L` es **impar**, `L − i` es par cuando `i` es impar: se duplican las posiciones 1, 3, 5…
 
-1. Recorre los dígitos empezando por la **derecha** (el último es el dígito verificador).
-2. Duplica uno de cada dos dígitos: el segundo desde la derecha, el cuarto, el sexto, etc.
-3. Si al duplicar obtienes un número de dos cifras, suma sus cifras (por ejemplo, 7 × 2 = 14 → 1 + 4 = 5). Equivale a restar 9.
-4. Suma todo. Si el total es divisible por 10, el número es válido.
+#### Los instintos que no sirven
 
-Ejemplo con `79927398713`:
+Antes de la solución, mira por qué fallan las ideas que suelen aparecer, porque cada una choca con una restricción concreta:
 
-```
-dígitos (der→izq): 3 1 7 8 9 3 7 2 9 9 7
-¿duplicar?:        n s n s n s n s n s n
-resultado:         3 2 7 7 9 6 7 4 9 9 7     (8*2=16→7, 9*2=18→9 ...)
-suma = 70  → 70 % 10 == 0 → válido
-```
+- **Guardar todos los dígitos y recorrerlos al final desde la derecha.** Es correcto, pero usa memoria O(n). Si la restricción es memoria O(1) (o si el stream es enorme), está prohibido.
+- **Leer primero para contar y después para sumar.** Necesita dos pasadas. Un stream no se puede releer.
+- **Suponer una paridad y "corregir" al final.** No hay corrección barata: si supusiste mal, duplicaste justo los dígitos equivocados, y para deshacerlo necesitarías los dígitos originales.
 
-La restricción que vuelve interesante el problema: **debes procesar cada carácter antes de leer el siguiente** (como si llegaran por un stream) y no sabes de antemano cuántos dígitos hay. Eso es un problema, porque qué dígitos se duplican depende de la posición contada **desde la derecha**, y no sabes dónde está la derecha hasta el final.
+#### La idea: dos sumas en paralelo
 
-Apliquemos el método:
-
-**Reducción A: convertir un carácter en número.** `"7".charCodeAt(0) - "0".charCodeAt(0)` da `7`. Pieza trivial, pero aislarla evita errores.
-
-**Reducción B: suma simple, longitud fija.** Leer 6 dígitos y sumarlos, comprobar divisibilidad por 10. Fácil.
-
-**Reducción C: Luhn con longitud fija.** Si sabes que siempre son 6 dígitos, sabes qué posiciones duplicar (las impares contando desde la izquierda, en este caso). Separas la lógica del duplicado en una función:
+La paridad de `L` solo puede tener **dos** valores. Entonces no hace falta adivinarla: lleva las dos respuestas a la vez. Una suma asume que la longitud total será par; la otra, que será impar. Cada dígito se suma a las dos, duplicado en una y sin duplicar en la otra. Al terminar, ya conoces `L` y eliges la suma que corresponde.
 
 ```ts
 function doubledDigitValue(d: number): number {
   const doubled = d * 2;
   return doubled >= 10 ? doubled - 9 : doubled;
 }
-```
 
-**Reducción D: el problema de la longitud desconocida.** Aquí está la dificultad real, y la descubriste gracias a reducir. Para atacarla, el libro usa un problema auxiliar: "leer números y al final decir si eran mayoría positivos o negativos, sin guardar todos". La solución es **llevar las dos cuentas a la vez** y decidir al final. Con Luhn es igual: llevas dos sumas en paralelo, una que asume que la longitud es par y otra que asume que es impar. Al terminar, ya sabes la longitud y eliges la suma correcta.
+export function isValidLuhn(digits: Iterable<string>): boolean {
+  let sumIfEven = 0; // correcta si la longitud total resulta par
+  let sumIfOdd = 0;  // correcta si la longitud total resulta impar
+  let length = 0;    // también es la posición del dígito actual
 
-```ts
-export function isValidLuhn(stream: Iterable<string>): boolean {
-  let sumIfEven = 0; // suma correcta si la longitud total resulta par
-  let sumIfOdd = 0;  // suma correcta si la longitud total resulta impar
-  let position = 0;  // posición desde la izquierda, empieza en 0
-
-  for (const ch of stream) {
+  for (const ch of digits) {
     if (ch < "0" || ch > "9") return false;
     const d = ch.charCodeAt(0) - 48;
-    // Con longitud par, se duplican las posiciones pares desde la izquierda (0, 2, 4...).
-    // Con longitud impar, se duplican las impares (1, 3, 5...).
-    if (position % 2 === 0) {
-      sumIfEven += doubledDigitValue(d);
+    if (length % 2 === 0) {
+      sumIfEven += doubledDigitValue(d); // longitud par: se duplican las posiciones pares
       sumIfOdd += d;
     } else {
       sumIfEven += d;
-      sumIfOdd += doubledDigitValue(d);
+      sumIfOdd += doubledDigitValue(d);  // longitud impar: se duplican las impares
     }
-    position++;
+    length++;
   }
-  if (position === 0) return false;
-  const total = position % 2 === 0 ? sumIfEven : sumIfOdd;
+  if (length < 2) return false; // hace falta al menos un dígito además del verificador
+  const total = length % 2 === 0 ? sumIfEven : sumIfOdd;
   return total % 10 === 0;
 }
 ```
 
-Verifica con un ejemplo de longitud par y uno de longitud impar antes de creerle al código. En una entrevista o en el trabajo, con un array completo simplemente recorrerías desde la derecha; la restricción del stream existía para forzarte a pensar en el **estado mínimo** que necesitas recordar. Esa forma de pensar aparece en sistemas reales: procesar logs gigantes, datos de sensores o streams de red donde no puedes guardar todo.
+#### Recorrido con una longitud par: `8763`
 
-### Parte 3: seguir el estado
+| Posición | Dígito | `sumIfEven` | `sumIfOdd` |
+| --- | --- | --- | --- |
+| 0 | 8 | 0 + 7 (16 − 9) = 7 | 0 + 8 = 8 |
+| 1 | 7 | 7 + 7 = 14 | 8 + 5 (14 − 9) = 13 |
+| 2 | 6 | 14 + 3 (12 − 9) = 17 | 13 + 6 = 19 |
+| 3 | 3 | 17 + 3 = 20 | 19 + 6 = 25 |
 
-El tercer tipo de puzzle es el más rico: el significado de cada entrada **depende de un modo** que cambia mientras lees. Vamos a resolver un problema propio, del mismo estilo que el del libro.
+Al terminar, `length = 4` es par: el total es `sumIfEven = 20`, divisible por 10, válido. Compruébalo con la versión A: desde la derecha, 3 (no), 6 → 3, 7 (no), 8 → 7; total 3 + 3 + 7 + 7 = 20.
 
-**Problema: decodificador con modos.** Recibes una cadena de enteros positivos separados por comas. Hay dos modos: `LETTER` y `DIGIT`. Empiezas en `LETTER`.
+#### Recorrido con una longitud impar: `125`
 
-- En `LETTER`, el número módulo 27 indica una letra (1 = a, 2 = b, …, 26 = z).
-- En `DIGIT`, el número módulo 11 indica un dígito (1 = "0", 2 = "1", …, 10 = "9").
-- Si el módulo da 0, **no se imprime nada** y se cambia al otro modo.
+| Posición | Dígito | `sumIfEven` | `sumIfOdd` |
+| --- | --- | --- | --- |
+| 0 | 1 | 2 | 1 |
+| 1 | 2 | 4 | 1 + 4 = 5 |
+| 2 | 5 | 4 + 1 (10 − 9) = 5 | 5 + 5 = 10 |
 
-Ejemplo: `"8,9,27,3,4,11,1"` → `8 % 27 = 8 → "h"`, `9 → "i"`, `27 % 27 = 0 → cambio a DIGIT`, `3 % 11 = 3 → "2"`, `4 → "3"`, `11 % 11 = 0 → cambio a LETTER`, `1 → "a"`. Resultado: `"hi23a"`.
+Ahora `length = 3` es impar: el total es `sumIfOdd = 10`, válido. Con la versión A: 5 (no), 2 → 4, 1 (no); total 10. Verificar con un ejemplo de cada paridad no es un trámite: si intercambiaras sin querer las dos ramas del `if`, uno de los dos recorridos lo delataría.
 
-**Descomposición:**
+#### Costo
 
-1. Leer números de una cadena separada por comas, procesando carácter a carácter (acumular dígitos hasta ver una coma o el final). Pieza aislada, probada sola.
-2. Convertir un número en letra para un valor 1–26.
-3. Convertir un número en dígito para un valor 1–10.
-4. Llevar el modo y cambiarlo cuando el módulo da 0.
+Una pasada: O(n) tiempo. Memoria: dos sumas y un contador, O(1), sin importar cuántos dígitos lleguen. Incluso el contador se puede reducir a un booleano, porque solo importa su paridad. Ese es el **estado mínimo**: todo lo que el resto del algoritmo necesita saber del pasado cabe en tres números.
 
-Cada pieza es pequeña. La pieza 4 es la del **estado**. Conviene modelarlo explícitamente con un tipo:
+### Generalizar: hipótesis paralelas
+
+La técnica de Luhn tiene nombre propio en esta ruta: **hipótesis paralelas**. Se aplica cuando se cumplen tres condiciones:
+
+1. Una decisión depende de un dato que llega tarde.
+2. Ese dato tiene **pocos valores posibles** (dos paridades, tres modos, k estados).
+3. Para cada valor posible, el trabajo se puede hacer de forma incremental.
+
+Entonces mantienes un estado por cada valor posible del dato y eliges al final. El costo se multiplica por la cantidad de hipótesis, así que la técnica solo es buena si son pocas. Con dos, es casi gratis.
+
+El libro llega a esta idea con un problema auxiliar que vale la pena recordar: "lee números de uno en uno y, al final, di si hubo más positivos o más negativos, sin guardarlos". Nadie guarda la lista: llevas los dos contadores y comparas al final. Luhn es el mismo movimiento con sumas en lugar de contadores.
+
+Vas a ver la misma idea más adelante con otros nombres. En programación dinámica, "una tabla con una fila por estado posible" es llevar todas las hipótesis a la vez. En los grafos con estado ampliado, como `(ciudad, vuelosUsados)`, cada nodo se duplica en una copia por valor de la restricción. Reconocer la forma general te ahorra redescubrirla cada vez.
+
+### Otra herramienta de estado mínimo: el resto acumulado
+
+No todo dato que llega tarde se resuelve con hipótesis paralelas. A veces basta con **comprimir** el pasado. Problema: los dígitos de un número enorme llegan de izquierda a derecha; di si es divisible por 7. El número puede tener un millón de dígitos, así que no cabe en un `number`.
+
+Reducción: si el número ya leído es `N` y llega el dígito `d`, el número nuevo es `10 · N + d`. Su resto módulo 7 solo depende del resto de `N`:
 
 ```ts
-type Mode = "LETTER" | "DIGIT";
-
-function decode(input: string): string {
-  let mode: Mode = "LETTER";
-  let output = "";
-  let current = 0;
-  let hasDigits = false;
-
-  const flush = () => {
-    if (!hasDigits) return;
-    const divisor = mode === "LETTER" ? 27 : 11;
-    const r = current % divisor;
-    if (r === 0) {
-      mode = mode === "LETTER" ? "DIGIT" : "LETTER";
-    } else if (mode === "LETTER") {
-      output += String.fromCharCode(96 + r);  // 97 es "a"
-    } else {
-      output += String(r - 1);
-    }
-    current = 0;
-    hasDigits = false;
-  };
-
-  for (const ch of input) {
-    if (ch === ",") flush();
-    else { current = current * 10 + (ch.charCodeAt(0) - 48); hasDigits = true; }
-  }
-  flush(); // el último número no termina en coma
-  return output;
+export function isDivisibleBy(digits: Iterable<string>, k: number): boolean {
+  let remainder = 0;
+  for (const ch of digits) remainder = (remainder * 10 + (ch.charCodeAt(0) - 48)) % k;
+  return remainder === 0;
 }
 ```
 
-Fíjate en el `flush()` final: es el típico caso borde que se olvida. Lo descubres si pruebas con una entrada que no termina en coma (es decir, casi todas).
+Con `"343"` y `k = 7`: 3 → 3; 34 → 34 % 7 = 6; 6 · 10 + 3 = 63 → 0. Divisible (343 = 7³). Aquí el dato que falta (el número completo) tiene demasiados valores para hipótesis paralelas, pero lo único que el futuro necesita de él es su resto. La pregunta guía es la misma en los dos casos: **¿qué es lo mínimo del pasado que el resto del algoritmo necesita?**
 
-### Diagrama de estados
+### Cuando la restricción te regala algo
 
-Cuando un problema tiene modos, dibujar un **diagrama de estados** antes de programar ahorra mucho tiempo:
+Las restricciones de forma de la entrada funcionan al revés: no esconden un problema, revelan un atajo. Algunas que vale la pena reconocer en cuanto aparecen:
 
-```
-          módulo 0
-   ┌─────────────────────┐
-   ▼                     │
-[LETTER] ── módulo 0 ──► [DIGIT]
-   │  ▲                   │  ▲
-   └──┘ módulo≠0:         └──┘ módulo≠0:
-        emitir letra           emitir dígito
-```
+| Si el enunciado dice… | Piensa en… |
+| --- | --- |
+| "ordenado" | búsqueda binaria, dos punteros (sesión 03) |
+| "valores entre 0 y k", k pequeño | usar el valor como índice de un array de conteo |
+| "encuentra el menor valor que cumple X" y X es monótona | búsqueda binaria sobre la respuesta (sesión 03) |
+| "¿existe un par…?", "¿ya apareció…?" | un `Set` o un `Map` con lo ya visto (sesión 13) |
+| "los k mayores", k mucho menor que n | un heap de tamaño k (sesión 13) |
+| "solo cuenta", "di cuántas formas" | no construyas las soluciones; cuenta, y quizá hay subproblemas repetidos (sesión 19) |
 
-Cada flecha es una transición; cada nodo, un modo. Si el diagrama está bien, el código es casi una traducción directa. Este patrón (máquina de estados finitos) aparece en parsers, protocolos de red, flujos de UI ("cargando", "listo", "error") y lógica de juegos.
+Y una advertencia del lado contrario: **no inventes restricciones**. "Los números son positivos" o "cabe en memoria" solo son ciertos si el enunciado lo dice o si lo preguntaste. Muchas soluciones fallan en producción por una suposición que nunca se escribió.
 
-### Parte 4: un problema que combina todo
+### Reducir a un problema conocido
 
-**Problema: compresión por repeticiones (run-length encoding).** Recibes una cadena como `"aaabccdddd"` y debes devolver `"a3b1c2d4"`. Restricción: procesas carácter a carácter, una sola pasada.
+Hay un segundo sentido de "reducir" que conviene distinguir del anterior. Reducir **quitando una restricción** te da una versión más fácil del mismo problema. Reducir **a otro problema** transforma tu problema en uno que ya sabes resolver, y la solución de ese te da la del tuyo.
 
-Apliquemos las tres herramientas de la sesión.
-
-**¿Qué estado mínimo necesito?** Al leer un carácter, solo me importa saber cuál era el carácter del grupo actual y cuántas veces lo vi. No necesito guardar la cadena entera. Estado: `currentChar` y `count`.
-
-**¿Cuáles son las transiciones?** Hay dos situaciones al leer un carácter `ch`:
-
-| Situación | Acción sobre el estado | Salida |
-| --- | --- | --- |
-| `ch === currentChar` | `count++` | nada |
-| `ch !== currentChar` | emitir grupo anterior, `currentChar = ch`, `count = 1` | `currentChar + count` |
-
-Y una situación especial: el **final de la entrada**, donde hay que emitir el último grupo (otra vez el `flush`). También el **inicio**, donde todavía no hay grupo anterior que emitir.
-
-**Reducción previa:** antes de escribir la versión final, resuelve una más simple: "cuenta cuántos grupos de caracteres iguales hay" (`"aaabccdddd"` → 4). Esa versión ya obliga a detectar el cambio de grupo, que es la parte delicada, sin preocuparte por construir la salida.
+Ejemplo: "dada una lista de reuniones `[inicio, fin)`, di si alguna se solapa con otra". Comparar todos los pares es O(n²). Replanteo: si las reuniones estuvieran ordenadas por inicio, un solapamiento solo puede ocurrir entre **vecinas** (si la reunión `i` no choca con la `i + 1`, que empieza antes que todas las siguientes, tampoco choca con ninguna posterior). El problema se reduce a "ordena y compara cada reunión con la siguiente": O(n log n), con la librería estándar haciendo el trabajo difícil.
 
 ```ts
-export function runLengthEncode(input: string): string {
-  let output = "";
-  let currentChar: string | null = null;
-  let count = 0;
+type Meeting = [start: number, end: number];
 
-  for (const ch of input) {
-    if (ch === currentChar) {
-      count++;
-    } else {
-      if (currentChar !== null) output += currentChar + count;
-      currentChar = ch;
-      count = 1;
-    }
+export function hasOverlap(meetings: Meeting[]): boolean {
+  const sorted = meetings.toSorted((a, b) => a[0] - b[0]);
+  for (let i = 1; i < sorted.length; i++) {
+    if (sorted[i][0] < sorted[i - 1][1]) return true; // empieza antes de que termine la anterior
   }
-  if (currentChar !== null) output += currentChar + count; // flush final
-  return output;
+  return false;
 }
 ```
 
-Recorrido con `"aab"`:
+La pregunta que dispara este tipo de reducción es: "¿qué tendría que ser cierto de la entrada para que esto fuera fácil?". Si la respuesta es "que esté ordenada", "que no tenga duplicados" o "que sea un grafo", a veces puedes hacer que lo sea pagando un costo razonable.
 
-```
-ch='a': currentChar=null → no emite; currentChar='a', count=1
-ch='a': igual → count=2
-ch='b': distinto → emite "a2"; currentChar='b', count=1
-fin:    flush → emite "b1"          resultado: "a2b1"
-```
+### Una plantilla para leer un enunciado
 
-Casos borde que debes probar: cadena vacía (debe devolver `""`, y el `null` inicial lo garantiza), un solo carácter (`"z"` → `"z1"`), todo igual (`"zzzz"` → `"z4"`) y todo distinto (`"abc"` → `"a1b1c1"`).
+Junta todo en un procedimiento corto que puedes aplicar a cualquier problema nuevo, antes de escribir una línea de código:
 
-Observa que el problema más "nuevo" de la sesión se resolvió casi solo porque ya tenías las piezas mentales: estado mínimo (de Luhn), transiciones explícitas (del decodificador) y el `flush` final. Eso es exactamente lo que significa **construir sobre lo que sabes**: cada problema resuelto con método deja herramientas reutilizables para el siguiente.
+1. Escribe las restricciones en una lista y marca si cada una **quita** o **da**.
+2. Escribe la solución obvia y señala qué restricción viola, si viola alguna.
+3. Descompón en piezas y, para cada decisión, anota qué datos necesita y **cuándo** existen.
+4. Si alguna decisión depende de un dato que llega tarde: ¿puedes guardarlo todo?, ¿puedes cambiar el orden de lectura?, ¿el dato tiene pocos valores (hipótesis paralelas)?, ¿basta con un resumen del pasado (estado comprimido)?
+5. Haz la escalera de reducciones y verifica la solución con un ejemplo de cada caso que la escalera mostró como distinto (en Luhn: longitud par e impar).
 
-Una pregunta para pensar: ¿qué pasa si la cadena original contiene dígitos, como `"a11"`? La salida `"a121"` se vuelve ambigua al decodificar. Esa observación no es un detalle: es un defecto de diseño del formato, y detectarlo forma parte de resolver bien el problema. Una solución sería usar un separador o limitar la entrada a letras, y esa decisión debería quedar escrita.
-
-### Ensamblar sin miedo a "copiar y pegar"
-
-Cuando ensamblas las piezas, reutilizas código que acabas de escribir. Esto es un buen tipo de copiar y pegar: entiendes cada línea porque la escribiste y la probaste. El mal tipo es pegar código ajeno que no entiendes. La diferencia está en el conocimiento, no en el atajo de teclado.
-
-Otro beneficio del enfoque por piezas: el código "en obra" nunca se vuelve feo ni largo, porque siempre trabajas sobre algo pequeño. Un programador experto podría escribir la solución final de una vez, pero tendría pasos falsos, código comentado y vuelto a descomentar. Ir por piezas no es de principiantes: es la forma profesional de reducir errores.
+El paso 3 es el que faltó en tu diagnóstico. No es un paso nuevo: es mirar tu propia descomposición con una pregunta más.
 
 ### Errores comunes
 
-- **Atacar la forma final directamente.** Empieza siempre por la versión más reducida que puedas resolver.
-- **No escribir la tabla fila → cantidad** en los patrones. Sin la tabla, buscas la fórmula a ciegas.
-- **Olvidar el último elemento** al procesar entrada delimitada (el `flush` final).
-- **Guardar más estado del necesario.** Pregúntate qué es lo mínimo que debes recordar (en Luhn: dos sumas y una posición).
-- **Mezclar parsing y lógica** en el mismo bloque de código. Sepáralos: primero obtener números, luego interpretarlos.
-- **Probar solo el caso feliz.** Prueba entrada vacía, un solo elemento y longitudes par e impar.
+- **Tratar las restricciones como detalles.** Suelen ser la razón por la que la solución obvia no sirve.
+- **Descomponer sin preguntar cuándo llega cada dato.** Las piezas pueden estar bien y la solución mal.
+- **Adivinar una hipótesis y planear "corregir al final".** Si corregir requiere los datos originales, no se puede.
+- **Usar hipótesis paralelas con demasiadas hipótesis.** Si el dato que falta tiene muchos valores, busca un resumen del pasado (como el resto acumulado) en lugar de una copia del estado por valor.
+- **Verificar con un solo ejemplo.** Si la solución distingue casos (par o impar), prueba al menos uno de cada uno.
+- **Inventar restricciones que el enunciado no da**, como "son positivos" o "cabe en memoria".
 
 ### Para llevarte
 
-Los tres problemas usaron el mismo método: descomponer en piezas, resolver cada una con un programa pequeño y ensamblar. Las herramientas concretas fueron la tabla para encontrar funciones de posición, las cuentas paralelas cuando falta información hasta el final y el modelo explícito de estados.
+Descomponer te da las piezas; leer las restricciones te dice si esas piezas pueden funcionar con la información que tienes y cuando la tienes. Cuando una decisión depende de algo que llega tarde y ese algo tiene pocos valores posibles, no adivines: calcula todas las respuestas a la vez y elige al final. En Luhn eso son dos sumas, una pasada y memoria O(1).
 
 ## Conceptos clave
 
-- **Puzzle puro**: problema con herramientas mínimas donde toda la dificultad está en el razonamiento.
-- **Función de posición**: fórmula que da, para cada número de fila o índice, la cantidad o el valor esperado.
-- **Contar al revés contando hacia adelante**: usar `max + 1 - i` para invertir un contador ascendente.
-- **Procesamiento de stream**: leer cada elemento una vez, sin poder volver atrás, guardando solo el estado mínimo.
-- **Cuentas paralelas**: llevar varias hipótesis a la vez y elegir la correcta cuando llega la información que faltaba.
-- **Máquina de estados**: modelo con modos y transiciones donde el significado de una entrada depende del modo actual.
-- **Flush final**: procesar el último elemento acumulado cuando la entrada termina sin delimitador.
+- **Restricción de información**: regla del enunciado que limita qué datos tienes y en qué momento los tienes.
+- **Restricción de recursos**: límite de tiempo, memoria o pasadas que prohíbe soluciones obvias.
+- **Dependencia hacia el futuro**: decisión que necesita un dato que todavía no llegó cuando hay que tomarla.
+- **Escalera de reducciones**: secuencia de versiones del problema, cada una con una restricción menos, que muestra dónde está la dificultad real.
+- **Hipótesis paralelas**: mantener un estado por cada valor posible de un dato que llega tarde y elegir el correcto al final.
+- **Estado mínimo**: lo más pequeño que hay que recordar del pasado para que el resto del algoritmo funcione.
+- **Estado comprimido**: resumen del pasado que basta para el futuro, como el resto módulo k de un número.
+- **Reducir a un problema conocido**: transformar el problema en otro con solución conocida, como ordenar para comparar solo vecinos.
 
 ## Preguntas de repaso
 
-1. ¿Cómo encuentras la fórmula para la cantidad de `#` de cada fila en un patrón simétrico?
-   R: Haces una tabla con el número de fila y la cantidad deseada, y buscas una expresión que la produzca. Para patrones que suben y bajan, `pico - |row - centro|` suele funcionar, porque el valor absoluto convierte una recta en una "V" y restarlo la invierte.
-2. En la validación de Luhn procesando un stream, ¿por qué hacen falta dos sumas?
-   R: Porque los dígitos que se duplican dependen de su posición contada desde la derecha, y no conoces la longitud total hasta el final. Llevas una suma que asume longitud par y otra que asume longitud impar; al terminar sabes la longitud y eliges la correcta.
-3. ¿Qué es una máquina de estados y por qué ayuda en el decodificador con modos?
-   R: Es un modelo con un conjunto finito de modos y reglas de transición entre ellos. En el decodificador, el significado de cada número depende del modo actual; modelar el modo como un tipo explícito y dibujar sus transiciones hace que el código sea una traducción directa del diagrama y evita condiciones enredadas.
-4. ¿Por qué es un error frecuente olvidar el `flush()` al final del bucle?
-   R: Porque el último número no va seguido de un delimitador, así que la lógica que procesa "al ver una coma" nunca se ejecuta para él. Sin un procesamiento explícito al final, el último elemento se pierde.
-5. ¿Por qué no es un objetivo minimizar el número de pasos al descomponer?
-   R: Porque la meta es llegar a un programa correcto en el menor tiempo, no en el menor número de pasos. Pasos más pequeños son más fáciles, generan menos errores y menos frustración; un paso grande y difícil suele costar más tiempo total.
+1. En la validación de Luhn con dígitos que llegan de izquierda a derecha y longitud desconocida, ¿por qué no puedes decidir al leer cada dígito si duplicarlo?
+   R: Porque los dígitos que se duplican se cuentan desde la derecha (el segundo, el cuarto…), y la posición desde la derecha depende de la longitud total. Si la longitud es par se duplican las posiciones pares desde la izquierda; si es impar, las impares. La longitud solo se conoce cuando termina la entrada.
+2. ¿Cómo se resuelve Luhn en una pasada y con memoria O(1) si no conoces la longitud?
+   R: Con dos sumas en paralelo: una asume longitud total par y otra impar. Cada dígito se suma a ambas, duplicado en una y sin duplicar en la otra según la paridad de su posición. Al terminar se conoce la longitud y se elige la suma correspondiente; el número es válido si esa suma es divisible por 10. Solo se guardan dos sumas y un contador.
+3. ¿Por qué no sirve suponer que la longitud es par y corregir al final si resulta impar?
+   R: Porque si la suposición era incorrecta, se duplicaron justo los dígitos equivocados, y deshacerlo exige conocer los dígitos originales, que ya no están guardados. La única forma de no guardarlos es haber calculado también la otra hipótesis desde el principio.
+4. ¿Qué tres condiciones hacen aplicable la técnica de hipótesis paralelas?
+   R: Que una decisión dependa de un dato que llega tarde, que ese dato tenga pocos valores posibles y que, para cada valor, el trabajo se pueda hacer de forma incremental. El costo se multiplica por la cantidad de hipótesis, por eso solo conviene si son pocas.
+5. ¿Cómo usas la reducción para encontrar la dificultad real de un problema?
+   R: Construyes una escalera de versiones quitando una restricción a la vez y miras en qué escalón tu idea deja de funcionar. La restricción que separa una versión fácil de una difícil es la dificultad; todo lo que funciona igual en ambas versiones no necesita repensarse.
+6. Para saber si un número de un millón de dígitos que llega dígito a dígito es divisible por 7, ¿qué estado mínimo guardas y por qué basta?
+   R: Solo el resto módulo 7 de lo leído hasta ahora. Si lo leído es N y llega el dígito d, el nuevo número es 10·N + d, y su resto depende solo del resto de N: (10 · resto + d) mod 7. Al final, el número es divisible si el resto es 0.
 
 ## Ejercicio
 
-Implementa en TypeScript `drawDiamond(n: number): string` que devuelva un rombo de `#` con `2n - 1` filas (la fila central tiene `2n - 1` hashes, centrados con espacios), usando solo concatenaciones de `"#"`, `" "` y `"\n"`. Antes, escribe en un comentario la tabla fila → espacios → hashes para `n = 3`, y resuelve primero las reducciones (triángulo centrado creciente, luego decreciente).
+En `luhn-stream.ts`, implementa en TypeScript `isValidLuhn(digits: Iterable<string>)` con dos sumas en paralelo y `checkDigit(payload: Iterable<string>)`, que devuelve el dígito verificador que hay que agregar a la derecha de `payload` para que el número completo sea válido, también en una sola pasada y con memoria O(1). Antes del código, escribe en un comentario la escalera de reducciones (versiones A, B y C) y qué cambia en `checkDigit` respecto de la validación (pista: el número completo tendrá un dígito más que el `payload`).
 
-Criterio de terminado: la tabla está en el comentario; `drawDiamond(1)` devuelve `"#\n"`; `drawDiamond(3)` produce 5 filas con 1, 3, 5, 3, 1 hashes centrados; tienes tests que lo verifican.
+Criterio de terminado: `isValidLuhn` acepta `"79927398713"`, `"8763"` y `"125"` y rechaza `"79927398710"`; `checkDigit("7992739871")` devuelve `3`; los tests cubren entrada vacía, un solo dígito, un carácter no numérico y al menos un caso de cada paridad; las dos funciones reciben un generador (no un string) en al menos un test, para demostrar que nunca releen la entrada.
 
 ## Explícalo con tus palabras
 
-Explica, como si fuera para un compañero que empieza, por qué la validación de Luhn sobre un stream necesita dos sumas y qué idea general de "estado mínimo" hay detrás.
+Explícale a un compañero por qué validar con Luhn dígitos que llegan de izquierda a derecha necesita dos sumas, y en qué otros problemas usarías la misma idea de llevar varias hipótesis a la vez.

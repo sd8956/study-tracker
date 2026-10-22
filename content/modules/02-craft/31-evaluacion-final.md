@@ -2,7 +2,7 @@
 title: Evaluación final — oficio, código limpio y prácticas de ingeniería
 kind: evaluation
 hours: 3
-sources: Sesiones 1–30 de este módulo | The Pragmatic Programmer, 20.ª ed. | Clean Code, caps. 1–10, 12 y 17 | Software Engineering at Google, caps. 1–3, 8–16, 19–20, 23–24 | Gentleman Programming Book, caps. 1–3, 7, 8, 10, 13, 17 y 18
+sources: Sesiones 1–28 de este módulo | The Pragmatic Programmer, 20.ª ed. | Clean Code, caps. 1–10, 12 y 17 | Software Engineering at Google, caps. 1–3, 8–16, 19–20, 23–24 | Gentleman Programming Book, caps. 1–3, 7, 8, 10, 13, 17 y 18
 ---
 
 ## Objetivo

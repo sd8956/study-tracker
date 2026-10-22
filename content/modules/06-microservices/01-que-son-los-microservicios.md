@@ -144,7 +144,7 @@ El consejo práctico es no adoptar todo de golpe. Empieza con pocos servicios y,
 | Alineación organizacional | Equipos pequeños dueños de servicios concretos |
 | Composabilidad | Las mismas capacidades se recombinan para web, móvil, socios, etc. |
 
-Ojo con la robustez: no viene gratis. Un sistema distribuido tiene más puntos de fallo. Solo es más robusto si diseñas cada servicio para tolerar que otros fallen (sesión 16).
+Ojo con la robustez: no viene gratis. Un sistema distribuido tiene más puntos de fallo. Solo es más robusto si diseñas cada servicio para tolerar que otros fallen (módulo 05, sesión 12, y sesión 12 de este módulo).
 
 ### 11. Puntos de dolor
 
