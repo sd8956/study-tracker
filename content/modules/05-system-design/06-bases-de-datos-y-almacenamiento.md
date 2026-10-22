@@ -62,7 +62,7 @@ Dos ideas del módulo 04 que vas a usar constantemente en los diagramas, resumid
 
 ### La familia NoSQL
 
-"NoSQL" agrupa modelos muy distintos. Lo que suelen compartir: esquema flexible, escalado horizontal nativo, consistencia a menudo eventual (BASE, sesión 07) y modelado según las consultas en vez de según las entidades.
+"NoSQL" agrupa modelos muy distintos. Lo que suelen compartir: esquema flexible, escalado horizontal nativo, consistencia a menudo eventual (BASE: *basically available, soft state, eventually consistent*) y modelado según las consultas en vez de según las entidades.
 
 **Key-value** (Redis, DynamoDB, etcd). Un diccionario gigante: `get(key)`, `put(key, value)`. Lecturas y escrituras O(1), latencia muy baja, escala horizontal trivial. No hay consultas por contenido salvo índices secundarios limitados. Usos: sesiones, caches, carritos, configuración, contadores. Diseñarás uno por dentro en la sesión 17.
 

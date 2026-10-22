@@ -70,7 +70,7 @@ En hardware moderno la diferencia de rendimiento es pequeña para la mayoría de
 | Random con dos opciones | Elige dos al azar y envía al menos cargado | Flotas grandes, muchos balanceadores | — (es sorprendentemente bueno) |
 | Hash (IP, usuario, URL) | `hash(clave) mod N` o consistent hashing | Afinidad: caches locales, sesiones | Redistribución al cambiar N; hotspots |
 
-Sobre el hash: si usas `hash(user_id) mod N` y N cambia de 4 a 5, casi todas las claves cambian de servidor y pierdes la afinidad (y la cache local) de golpe. La solución es consistent hashing, que verás en la sesión 08.
+Sobre el hash: si usas `hash(user_id) mod N` y N cambia de 4 a 5, casi todas las claves cambian de servidor y pierdes la afinidad (y la cache local) de golpe. La solución es consistent hashing: servidores y claves en un anillo, de modo que agregar un servidor solo mueve las claves de su tramo (lo ves aplicado en el key-value store de la sesión 17; el rebalanceo de particiones, en el módulo 04, sesión 14).
 
 ### Health checks
 

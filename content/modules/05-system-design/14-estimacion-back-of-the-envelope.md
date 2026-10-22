@@ -127,7 +127,7 @@ Supuestos: 5 M de usuarios diarios ven 5 videos al día; cada video dura en prom
  ancho de banda prom = 2,8 PB / 10^5 s ≈ 28 GB/s ≈ 224 Gbps  (pico: ~2-3x)
 ```
 
-**Conclusión**: ningún datacenter propio sirve esto de forma razonable; la CDN es obligatoria y el costo de transferencia es el costo dominante del sistema (lo retomarás en la sesión 25). Si un GB servido por CDN cuesta, digamos, 0,02 USD, son ~56.000 USD por día: una buena razón para optimizar la codificación y servir videos populares desde caches baratas.
+**Conclusión**: ningún datacenter propio sirve esto de forma razonable; la CDN es obligatoria y el costo de transferencia es el costo dominante del sistema. Si un GB servido por CDN cuesta, digamos, 0,02 USD, son ~56.000 USD por día: una buena razón para optimizar la codificación y servir videos populares desde caches baratas.
 
 ### Ejemplo 3: memoria para una cache
 

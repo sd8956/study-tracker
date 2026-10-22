@@ -14,7 +14,7 @@ Consolidar el módulo reconociendo los patrones que se repiten en todos los caso
 
 ### Por qué una sesión de patrones
 
-Después de doce casos de estudio, el riesgo es recordar cada sistema como una historia aislada ("en el chat había WebSockets, en YouTube había un DAG"). Lo que transfiere a problemas nuevos no son las historias sino los **patrones**: las mismas diez o quince ideas recombinadas. Esta sesión los hace explícitos con varios problemas que no viste todavía (y repasa uno conocido desde otro ángulo), resueltos en el primer, y termina con un catálogo que puedes usar como lista de verificación en cualquier diseño.
+Después de nueve casos de estudio, el riesgo es recordar cada sistema como una historia aislada ("en el chat había WebSockets, en Google Drive había delta sync"). Lo que transfiere a problemas nuevos no son las historias sino los **patrones**: las mismas diez o quince ideas recombinadas. Esta sesión los hace explícitos con varios problemas que no viste todavía (y repasa uno conocido desde otro ángulo), resueltos en el primer, y termina con un catálogo que puedes usar como lista de verificación en cualquier diseño.
 
 ### Problema 1: ranking de ventas por categoría (tipo Amazon)
 
@@ -45,7 +45,7 @@ Después de doce casos de estudio, el riesgo es recordar cada sistema como una h
 
 El cálculo es por lotes: un **MapReduce** de varios pasos (1) transforma las líneas de log en pares `(categoría, producto) → suma de cantidades`, y (2) hace un ordenamiento distribuido por categoría y total. El resultado (pocos miles de filas por categoría) se escribe en una tabla `sales_rank` indexada por categoría, que se lee a través de una cache.
 
-**Patrones**: separar la ruta de escritura (registrar ventas, barato) de un **cálculo derivado por lotes** (ranking); **precalcular** el resultado que se lee 40.000 veces por segundo; **cache** delante del resultado. Es la misma forma que el autocompletado de la sesión 24: logs → agregación → estructura de lectura precalculada.
+**Patrones**: separar la ruta de escritura (registrar ventas, barato) de un **cálculo derivado por lotes** (ranking); **precalcular** el resultado que se lee 40.000 veces por segundo; **cache** delante del resultado. Es una forma que vas a reconocer en muchos sistemas (un autocompletado de búsquedas, por ejemplo, se construye igual): logs → agregación → estructura de lectura precalculada.
 
 **Escalado**: réplicas de lectura y cache para las 40.000 lecturas/s; los logs crudos en object storage; si se necesitara frescura de minutos para productos muy populares, una capa de streaming que mantiene contadores en ventanas cortas y se fusiona con el resultado por lotes (una arquitectura con capa batch y capa de velocidad).
 
@@ -117,11 +117,11 @@ Detalles del primer: la extracción es **asíncrona** con una cola de trabajos (
 
 **Diseño**: una cache **LRU** implementada con una **tabla hash** (búsqueda O(1) de la consulta) y una **lista doblemente enlazada** (los accesos mueven la entrada a la cabeza; al llenarse, se expulsa la cola). Para expirar resultados que cambian, cada entrada tiene un TTL o se invalida cuando el índice se actualiza.
 
-**Escalar a muchas máquinas**: el primer compara tres opciones: (1) cada máquina con su propia cache (simple, pero baja tasa de aciertos porque las consultas se reparten); (2) cada máquina con una copia completa (simple, pero desperdicia memoria); (3) **la cache particionada entre todas las máquinas**, con `machine = hash(query) % n` o, mejor, consistent hashing (sesión 08). La tercera es la recomendada: más compleja, pero cada consulta tiene un único lugar y la memoria total se suma.
+**Escalar a muchas máquinas**: el primer compara tres opciones: (1) cada máquina con su propia cache (simple, pero baja tasa de aciertos porque las consultas se reparten); (2) cada máquina con una copia completa (simple, pero desperdicia memoria); (3) **la cache particionada entre todas las máquinas**, con `machine = hash(query) % n` o, mejor, consistent hashing (sesión 17). La tercera es la recomendada: más compleja, pero cada consulta tiene un único lugar y la memoria total se suma.
 
 Con 4.000 búsquedas/s y una cache bien dimensionada para las consultas populares, el índice completo solo recibe los misses, que son las consultas raras.
 
-**Patrones**: la estructura de datos de la sesión 05 (LRU con hash y lista) llevada a escala con la partición de la sesión 08. Un buen recordatorio de que muchas "piezas de infraestructura" son estructuras de datos clásicas más una estrategia de distribución.
+**Patrones**: la estructura de datos de la sesión 05 (LRU con hash y lista) llevada a escala con el particionado de la sesión 17. Un buen recordatorio de que muchas "piezas de infraestructura" son estructuras de datos clásicas más una estrategia de distribución.
 
 ### Problema 5: escalar a millones de usuarios en la nube
 
@@ -132,23 +132,23 @@ La última solución del primer repite, con servicios de AWS, el recorrido de la
 | Patrón | Qué resuelve | Dónde lo viste |
 | --- | --- | --- |
 | Capa web stateless + LB | Escalar y tolerar fallos de servidores | 01, 04, todos los casos |
-| Cache (aside, write-through, write-behind) | Latencia y carga de lectura | 05, 19, 22, 24, 25 |
-| CDN y object storage | Archivos grandes y egreso masivo | 05, 06, 25, 26 |
-| Réplicas de lectura | Lecturas y disponibilidad | 01, 06, 27 |
-| Sharding + consistent hashing | Volumen y escrituras | 06, 08, 17, 20, 24 |
-| Cola / log de eventos | Picos, desacople, dependencias lentas | 09, 21, 25, 29 |
-| Precalcular al escribir (fan-out, top-k, rankings) | Lecturas O(1) en sistemas de mucha lectura | 22, 24, 29 |
-| Calcular al leer (pull) | Escrituras baratas, datos poco leídos | 22 (celebridades), 25 (codificación bajo demanda) |
-| Pipeline por lotes (logs → agregación → vista) | Derivar datos caros sin afectar la ruta caliente | 20, 24, 29 |
+| Cache (aside, write-through, write-behind) | Latencia y carga de lectura | 05, 19, 22, 26 |
+| CDN y object storage | Archivos grandes y egreso masivo | 05, 06, 22, 26 |
+| Réplicas de lectura | Lecturas y disponibilidad | 01, 06, 28 |
+| Sharding + consistent hashing | Volumen y escrituras | 06, 17, 22, 28 |
+| Cola / log de eventos | Picos, desacople, dependencias lentas | 09, 21, 28, 29 |
+| Precalcular al escribir (fan-out, top-k, rankings) | Lecturas O(1) en sistemas de mucha lectura | 22, 29 |
+| Calcular al leer (pull) | Escrituras baratas, datos poco leídos | 22 (celebridades) |
+| Pipeline por lotes (logs → agregación → vista) | Derivar datos caros sin afectar la ruta caliente | 29 (ranking de ventas, Mint) |
 | Conexiones persistentes + pub/sub interno | Tiempo real servidor → cliente | 10, 23, 26, 28 |
 | IDs ordenables por tiempo | Orden, paginación, particionado | 18, 22, 23 |
 | Idempotencia + at-least-once | Reintentos seguros | 09, 12, 16, 21, 28 |
 | Rate limiting | Protección y equidad | 16, 21 |
-| Quórums y consistencia ajustable | Elegir C o A por operación | 07, 17 |
-| Índice especializado (trie, invertido, geoespacial, Bloom) | Consultas que un B-tree no resuelve | 20, 24, 27 |
-| Fase gruesa + fase fina | Búsqueda eficiente de candidatos y filtrado exacto | 24, 27, 29 |
+| Quórums y consistencia ajustable | Elegir C o A por operación | 17 |
+| Índice especializado (invertido, geoespacial, Bloom) | Consultas que un B-tree no resuelve | 05, 19, 28 |
+| Fase gruesa + fase fina | Búsqueda eficiente de candidatos y filtrado exacto | 17 (Bloom filters y SSTables), 28 (celdas y haversine) |
 | Aislamiento por canal o prioridad (bulkhead) | Que un fallo o un pico no afecte todo | 12, 21 |
-| Cola larga y tiering | Costo en sistemas de contenido | 06, 25, 26 |
+| Cola larga y tiering | Costo en sistemas de contenido | 06, 26 |
 
 ### Cómo usar el catálogo frente a un problema nuevo
 
@@ -201,8 +201,8 @@ El libro cierra recomendando estudiar arquitecturas reales y blogs de ingenierí
    R: Desde un solo lado, del orden de 50⁶ ≈ 1,56 × 10¹⁰ nodos. Bidireccional, cada lado explora unos 3 niveles: 2 × 50³ = 250.000 nodos, unas cinco órdenes de magnitud menos.
 3. ¿Qué cambia en el diseño de Mint por ser un sistema dominado por escrituras?
    R: Las optimizaciones se invierten: las escrituras (transacciones extraídas de los bancos) se procesan de forma asíncrona y por lotes mediante colas y workers; los agregados mensuales se precalculan para servir las pocas lecturas de forma barata; y se evita trabajo para usuarios inactivos.
-4. Nombra tres patrones del catálogo que aparecen tanto en el autocompletado como en el ranking de ventas.
-   R: Pipeline por lotes desde logs crudos hasta una vista precalculada; precalcular el resultado al escribir para que la lectura sea O(1); y cache delante de la estructura precalculada para soportar el alto volumen de lecturas.
+4. Nombra tres patrones del catálogo que aparecen tanto en el agregador tipo Mint como en el ranking de ventas.
+   R: Pipeline por lotes desde logs crudos (guardados en object storage) hasta una vista precalculada con MapReduce; precalcular los agregados para que las lecturas sean baratas en lugar de recorrer millones de filas en cada visita; y separar la ruta de escritura barata (registrar ventas o transacciones) del cálculo derivado, que corre aparte sin afectar la ruta caliente.
 5. ¿Qué haces primero frente a un problema de diseño nuevo según el método de esta sesión?
    R: Clasificar la carga (lectura, escritura, picos, tiempo real) e identificar el dato dominante y la consulta difícil. De eso se deriva dónde hacer el trabajo (al escribir o al leer), qué índice especializado hace falta y qué consistencia necesita cada dato.
 

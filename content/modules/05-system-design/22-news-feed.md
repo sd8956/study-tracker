@@ -116,7 +116,7 @@ Un umbral razonable queda en el orden de cientos de miles a un millón de seguid
 
 Las garantías se negocian por tipo de lector:
 
-- **El autor** debe ver su post de inmediato (read-your-writes, sesión 07): al publicar, el cliente lo inserta en su propia vista de forma optimista y el servidor agrega el post al feed del autor en la misma petición, antes del fan-out asíncrono.
+- **El autor** debe ver su post de inmediato (read-your-writes; módulo 04, sesión 11): al publicar, el cliente lo inserta en su propia vista de forma optimista y el servidor agrega el post al feed del autor en la misma petición, antes del fan-out asíncrono.
 - **Los seguidores** pueden verlo con unos segundos de retraso (consistencia eventual): es aceptable para una red social y es lo que permite un fan-out asíncrono con colas.
 - **El orden**: si los posts se ordenan por un ID ordenable por tiempo (Snowflake, sesión 18), los feeds de distintas fuentes (push y pull) se mezclan con un merge simple por ID, sin consultar timestamps aparte.
 

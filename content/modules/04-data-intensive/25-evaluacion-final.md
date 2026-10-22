@@ -3,20 +3,74 @@ title: "Evaluación final: sistemas intensivos en datos"
 kind: evaluation
 hours: 3
 sources: Designing Data-Intensive Applications (Kleppmann), caps. 1–12 (pp. 25–565)
+links: Saltzer, Reed y Clark, "End-to-End Arguments in System Design" | https://web.mit.edu/Saltzer/www/publications/endtoend/endtoend.pdf
 ---
 
 ## Objetivo
 
-Comprobar que puedes razonar con los trade-offs de todo el módulo (almacenamiento, codificación, replicación, particionamiento, transacciones, sistemas distribuidos, consenso y datos derivados) aplicándolos a escenarios concretos, no solo recordando definiciones.
+Comprobar que puedes razonar con los trade-offs de todo el módulo (almacenamiento, codificación, replicación, particionamiento, transacciones, sistemas distribuidos, consenso y datos derivados) aplicándolos a escenarios concretos, no solo recordando definiciones. Antes de las preguntas, un repaso breve cierra el libro con su idea final: cómo integrar sistemas con datos derivados y cómo garantizar la corrección de extremo a extremo.
 
 ## Estudio
 
 ### Cómo hacer esta evaluación
 
-- Reserva 3 horas sin interrupciones. Dedica unos 10–12 minutos por pregunta y deja 20 minutos al final para revisar.
+- Reserva 3 horas sin interrupciones. Lee primero el repaso de integración y corrección (unos 15 minutos), dedica unos 9–10 minutos por pregunta y deja 15 minutos al final para revisar.
 - Responde **sin mirar** las sesiones anteriores. Escribe tus respuestas completas antes de enviarlas al tutor; él las comparará con la respuesta modelo.
 - Una buena respuesta **nombra el mecanismo**, **explica por qué funciona o falla** y **menciona el trade-off**. Una respuesta que solo nombra el concepto se considera incompleta.
-- Las preguntas 1–5 cubren la Parte I, las 6–12 la Parte II y las 13–14 la Parte III. Las que fallen, repásalas en la sesión indicada entre paréntesis en la respuesta modelo.
+- Las preguntas 1–5 cubren la Parte I, las 6–12 la Parte II y las 13–16 la Parte III. Las que fallen, repásalas en la sesión indicada entre paréntesis en la respuesta modelo; "repaso" remite a la sección siguiente.
+
+### Repaso: integración de datos y corrección end-to-end
+
+El libro termina con una pregunta práctica: si ninguna herramienta sirve para todo, ¿cómo combinas varias sin que se contradigan? Y una vez combinadas, ¿cómo te aseguras de que el resultado sea correcto aunque fallen piezas? Estas son las ideas que necesitas para las preguntas 13–16.
+
+#### Un sistema de registro y muchos datos derivados
+
+Casi cualquier aplicación real usa varios almacenes: una base OLTP, un índice de búsqueda, un cache, un warehouse, quizá un modelo de recomendaciones. La regla para que no diverjan es decidir, por cada tipo de dato, **un único sistema de registro** (donde se escribe primero, la fuente de verdad) y tratar todo lo demás como **datos derivados**: copias transformadas que se pueden borrar y reconstruir.
+
+```
+ app ──escribe──► [PostgreSQL]  (sistema de registro)
+                       │ CDC, en orden de commit
+                       ▼
+                   [log: Kafka] ──► [índice de búsqueda]
+                                 ├─► [cache]
+                                 └─► [warehouse]
+```
+
+El log ordenado sustituye a las escrituras duales y a las transacciones distribuidas: cada consumidor aplica los cambios en el mismo orden, de forma idempotente, y si se atrasa o se cae, el log amortigua y los demás siguen. El precio es que los sistemas derivados quedan **atrasados unos instantes** respecto a la fuente. Como el log se puede releer, cambiar una vista también es más fácil: construyes la vista nueva en paralelo reprocesando el histórico y mueves a los lectores poco a poco. Un motor que unifica batch y stream (el mismo código sobre eventos históricos y en vivo, con ventanas por event time) evita mantener dos implementaciones, que era el problema de la arquitectura lambda. A esta forma de componer almacenes especializados unidos por logs el libro la llama **desagregar la base de datos** (*unbundling*): es lo que una base hace por dentro con sus índices, pero repartido entre herramientas.
+
+#### El argumento end-to-end
+
+Una base serializable no impide que un cliente cobre dos veces. Si la conexión se corta después del `COMMIT` y el cliente reintenta, la base ve dos transacciones legítimas. TCP deduplica dentro de una conexión, no entre conexiones, y el usuario puede volver a pulsar el botón. La única defensa completa vive en los **extremos**: el cliente genera un **ID de operación** antes del primer intento y ese ID viaja hasta la base, donde una restricción de unicidad hace fallar el segundo intento.
+
+```sql
+BEGIN;
+INSERT INTO requests (request_id, ...) VALUES ('7f3a…', ...);  -- UNIQUE(request_id)
+UPDATE accounts SET balance = balance - 11 WHERE id = 4321;
+UPDATE accounts SET balance = balance + 11 WHERE id = 1234;
+COMMIT;
+```
+
+Esa es la idea de Saltzer, Reed y Clark: ciertas garantías solo pueden implementarse del todo con ayuda de la aplicación en los extremos; lo que ofrecen las capas intermedias es útil, pero no suficiente.
+
+#### Restricciones con logs, sin coordinación global
+
+Una restricción como "nombre de usuario único" o "saldo no negativo" necesita decidir quién gana entre peticiones concurrentes. En lugar de un commit atómico entre nodos, puedes **particionar el log por el valor restringido** (el nombre, la cuenta) y dejar que un único consumidor por partición procese las peticiones en orden y emita aceptación o rechazo. Una operación que toca varias particiones, como una transferencia, se escribe **una sola vez** en el log con su ID; de ella se derivan con pasos deterministas un mensaje de débito y uno de crédito, y cada partición deduplica por ID. El resultado es correcto sin transacciones distribuidas.
+
+#### Integridad antes que puntualidad
+
+La palabra "consistencia" mezcla dos cosas distintas:
+
+| | Puntualidad (*timeliness*) | Integridad (*integrity*) |
+| --- | --- | --- |
+| Qué significa | Ver el estado más reciente | No perder ni corromper datos |
+| Si se viola | Se arregla esperando | Queda mal hasta que alguien lo repare |
+| Ejemplo | Una compra de hoy aún no aparece en el extracto | El saldo no cuadra con las transacciones |
+
+Casi todas las aplicaciones pueden tolerar un retraso de puntualidad, pero nunca una violación de integridad. Los dataflows con logs sacrifican la primera y protegen la segunda con mensajes inmutables, derivación determinista e IDs de petición. Muchas restricciones, además, pueden ser **laxas**: si se sobrevende un asiento, se compensa y se pide disculpas, como ya hacen aerolíneas y almacenes. Así reservas la coordinación síncrona para las acciones que no tienen vuelta atrás. Y como los discos, la memoria y hasta las bases tienen bugs, la integridad también se **audita**: restaurar backups de verdad, recalcular vistas derivadas y comparar, verificar réplicas con checksums o Merkle trees.
+
+#### Responsabilidad sobre los datos
+
+El cierre del libro no es técnico. Los datos suelen describir personas, y los sistemas que deciden sobre ellas (créditos, empleos, seguros) pueden aprender y amplificar sesgos históricos con apariencia de objetividad, sin que la persona afectada pueda apelar. Recoger solo lo necesario, para fines explícitos, y borrarlo cuando deja de hacer falta (el principio de minimización del GDPR) reduce también el riesgo técnico: un dato que no guardas no se puede filtrar.
 
 ## Preguntas de evaluación
 
@@ -29,7 +83,7 @@ Comprobar que puedes razonar con los trade-offs de todo el módulo (almacenamien
 4. Tu equipo usa Protocol Buffers entre microservicios desplegados con rolling upgrades. Un desarrollador propone: (a) renombrar el campo `user_name` a `username`, (b) cambiar el tag del campo `email` de 4 a 5 "para ordenar", (c) añadir un campo `required phone = 6`. Evalúa cada cambio.
    R: (a) Es seguro: la codificación usa tags, no nombres, así que los datos viejos y nuevos siguen siendo compatibles (solo cambia el código generado). (b) Es peligroso: los datos existentes y los servicios viejos interpretan el tag 4 como email; con el cambio, el código nuevo no encuentra el email en datos viejos y el viejo ignora o malinterpreta el tag 5; rompe la compatibilidad en ambas direcciones. (c) Rompe la backward compatibility: el código nuevo fallará al leer datos escritos por servicios viejos que no incluyen el campo; un campo añadido tras el despliegue inicial debe ser opcional o tener default (y proto3 eliminó required) (sesión 08).
 5. Un servicio de pagos hace un `charge()` por RPC con timeout de 2 s y reintenta 3 veces si hay timeout. Han aparecido clientes con cobros dobles. Explica la causa y diseña la solución de extremo a extremo.
-   R: Un timeout no indica si la petición se procesó: puede que el cobro se aplicara y solo se perdiera o retrasara la respuesta, así que el reintento cobra de nuevo. La solución es idempotencia end-to-end: el cliente genera un ID de operación único antes del primer intento y lo envía en cada reintento; el servicio de pagos lo guarda en una tabla con restricción de unicidad dentro de la misma transacción que el cobro, y ante un ID repetido devuelve el resultado guardado en vez de cobrar. Además, reintentos con backoff exponencial y límite para no agravar una sobrecarga (sesiones 09, 15 y 24).
+   R: Un timeout no indica si la petición se procesó: puede que el cobro se aplicara y solo se perdiera o retrasara la respuesta, así que el reintento cobra de nuevo. La solución es idempotencia end-to-end: el cliente genera un ID de operación único antes del primer intento y lo envía en cada reintento; el servicio de pagos lo guarda en una tabla con restricción de unicidad dentro de la misma transacción que el cobro, y ante un ID repetido devuelve el resultado guardado en vez de cobrar. Además, reintentos con backoff exponencial y límite para no agravar una sobrecarga (sesiones 09 y 15, y el repaso de integración).
 6. Una app de notas usa PostgreSQL con un primario y tres réplicas asíncronas, y lee siempre de una réplica aleatoria. Los usuarios reportan que (a) al guardar una nota no aparece en la lista y (b) a veces una nota aparece y al recargar desaparece. Nombra cada anomalía y propón una técnica concreta para cada una.
    R: (a) Es una violación de read-after-write (read-your-writes) por replication lag: la escritura fue al primario y la lectura a una réplica atrasada. Solución: guardar el LSN devuelto tras la escritura (centralizado si hay varios dispositivos) y leer solo de réplicas cuyo replay LSN lo haya alcanzado, o del primario; o leer del primario las notas propias durante un tiempo tras escribir. (b) Es una violación de monotonic reads: dos lecturas consecutivas fueron a réplicas con distinto lag. Solución: fijar la réplica por hash del ID de usuario (y, si falla, elegir otra al menos tan avanzada) (sesión 11).
 7. En un clúster Cassandra con n = 3 usas escrituras y lecturas con consistencia ONE para tener la menor latencia. Un compañero dice que "Cassandra es eventualmente consistente, así que da igual". ¿Qué riesgos concretos hay, qué configuración propondrías para un dato que debe leerse actualizado, y qué límites tiene incluso esa configuración?
@@ -45,9 +99,13 @@ Comprobar que puedes razonar con los trade-offs de todo el módulo (almacenamien
 12. Explica por qué el registro de nombres de usuario únicos no se puede resolver solo con timestamps de Lamport y cómo lo resuelve un sistema basado en total order broadcast o consenso. Relaciónalo con la linealizabilidad y el teorema CAP.
    R: Los timestamps de Lamport dan un orden total consistente con la causalidad, pero ese orden solo se conoce a posteriori: un nodo que recibe un registro no puede saber si otro nodo está registrando el mismo nombre con un timestamp menor sin preguntar a todos, y si alguno no responde se bloquea. Con total order broadcast (un log replicado por consenso, como Raft en etcd o una partición de Kafka por nombre) cada reclamación se añade al log y todos los nodos ven el mismo orden; gana la primera reclamación del nombre, lo que equivale a un compare-and-set linealizable. Como requiere linealizabilidad, ante una partición de red el lado sin mayoría no puede aceptar registros: elige consistencia sobre disponibilidad (CAP), y además paga latencia proporcional a la incertidumbre de la red (sesiones 19–21).
 13. Un equipo mantiene un índice de Elasticsearch y un cache Redis actualizándolos desde el código de la aplicación justo después de escribir en PostgreSQL. Aparecen búsquedas que muestran datos que ya no existen. Explica la causa y propón una arquitectura mejor, incluyendo cómo reconstruir el índice si se corrompe.
-   R: Son escrituras duales: dos peticiones concurrentes pueden aplicar sus cambios a PostgreSQL y a Elasticsearch en órdenes distintos, dejando valores divergentes para siempre, y si una de las escrituras falla (o la aplicación se cae entre ambas) queda una actualizada y la otra no. Mejor: PostgreSQL como único sistema de registro y change data capture (logical decoding con Debezium) publicando los cambios en Kafka en el orden del commit; Elasticsearch y Redis son consumidores idempotentes que aplican los cambios en ese orden. Para reconstruir el índice se usa un snapshot consistente asociado a un offset más los cambios posteriores, o un topic con log compaction que contiene el último valor de cada clave y se relee desde el offset 0 (sesiones 23 y 24).
+   R: Son escrituras duales: dos peticiones concurrentes pueden aplicar sus cambios a PostgreSQL y a Elasticsearch en órdenes distintos, dejando valores divergentes para siempre, y si una de las escrituras falla (o la aplicación se cae entre ambas) queda una actualizada y la otra no. Mejor: PostgreSQL como único sistema de registro y change data capture (logical decoding con Debezium) publicando los cambios en Kafka en el orden del commit; Elasticsearch y Redis son consumidores idempotentes que aplican los cambios en ese orden. Para reconstruir el índice se usa un snapshot consistente asociado a un offset más los cambios posteriores, o un topic con log compaction que contiene el último valor de cada clave y se relee desde el offset 0 (sesión 23 y el repaso de integración).
 14. Un dashboard de streaming muestra pedidos por minuto y, tras cada despliegue del procesador, aparece un pico enorme seguido de un hueco. Además, el negocio exige que ningún pedido se cuente dos veces. Explica la causa del pico y cómo diseñarías el conteo correcto.
    R: El procesador agrupa por processing time: durante el despliegue no procesa, y al volver consume el backlog de golpe, así que todos esos eventos caen en el minuto actual (pico) mientras los minutos reales quedan vacíos (hueco). Hay que usar ventanas tumbling de 1 minuto por event time (el timestamp del pedido), con watermarks para decidir cuándo cerrar una ventana y una política para eventos tardíos (descartarlos con métrica o publicar correcciones). Para no contar dos veces tras fallos: semántica effectively-once mediante checkpoints del estado junto con los offsets (Flink) o transacciones de Kafka que confirman salida, estado y offset de forma atómica, y deduplicación por ID de pedido en el sink si escribe a un sistema externo (sesión 23).
+15. Un servicio de reservas recibe la misma petición de "reservar plaza" dos veces porque la app móvil reintentó tras perder la conexión justo después de enviar la solicitud. La base es PostgreSQL con aislamiento SERIALIZABLE. ¿Por qué el aislamiento no evita la reserva duplicada y qué cambio de extremo a extremo la evita?
+   R: Porque, para la base, son dos transacciones independientes y válidas: el aislamiento serializable solo garantiza que transacciones concurrentes se comporten como si fueran en serie, no que una transacción no se repita. TCP tampoco ayuda, porque deduplica dentro de una conexión y el reintento abre otra. La solución es el argumento end-to-end: la app genera un ID de operación antes del primer intento y lo envía en cada reintento; el servidor lo inserta, dentro de la misma transacción que la reserva, en una tabla con restricción de unicidad, así que el segundo intento falla al insertar y se devuelve el resultado ya guardado (repaso de integración).
+16. En el sistema de pedidos de una tienda, un compañero propone una transacción distribuida (2PC) entre el servicio de pedidos, el de inventario y el de pagos "para que todo sea consistente". Propón una alternativa basada en logs, explica qué garantía ofrece y cuál deja de ofrecer, y di qué haces si se vende una unidad que no había.
+   R: El pedido se escribe una sola vez, con un ID único, en un log particionado (por ejemplo, Kafka); de ese evento se derivan con pasos deterministas los mensajes para inventario y pagos, y cada consumidor los aplica de forma idempotente deduplicando por el ID. Se mantiene la integridad (ningún pedido se pierde ni se cobra dos veces, y todo se puede reprocesar desde el log) sin coordinación síncrona entre servicios, así que la caída de uno no bloquea a los demás. Se pierde la puntualidad: durante unos instantes el inventario o el estado del pago pueden no reflejar el pedido. Si se vendió una unidad inexistente, se trata como una restricción laxa: se detecta después, se compensa (reponer, ofrecer alternativa o reembolsar) y se avisa al cliente, que es más barato que coordinar todas las ventas de forma síncrona (repaso de integración; sesión 21 para los límites de 2PC).
 
 ## Explícalo con tus palabras
 

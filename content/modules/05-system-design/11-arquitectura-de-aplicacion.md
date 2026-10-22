@@ -207,7 +207,7 @@ Ventajas: historial completo y auditable (ideal en dominios financieros o regula
  Consultas <── [Modelo de lectura] <── (vistas desnormalizadas: Elasticsearch, Redis, tablas por pantalla)
 ```
 
-Ventajas: cada lado escala por separado (normalmente las lecturas son muchas más), las vistas de lectura se diseñan para cada pantalla sin joins, el modelo de escritura se mantiene limpio y enfocado en invariantes, y encaja naturalmente con event sourcing (los eventos alimentan las proyecciones de lectura). Desventajas: más complejidad, más código y más infraestructura; consistencia eventual entre escribir y ver el cambio (mitígala con read-your-writes, sesión 07); y no tiene sentido para CRUD simple.
+Ventajas: cada lado escala por separado (normalmente las lecturas son muchas más), las vistas de lectura se diseñan para cada pantalla sin joins, el modelo de escritura se mantiene limpio y enfocado en invariantes, y encaja naturalmente con event sourcing (los eventos alimentan las proyecciones de lectura). Desventajas: más complejidad, más código y más infraestructura; consistencia eventual entre escribir y ver el cambio (mitígala con read-your-writes; módulo 04, sesión 11); y no tiene sentido para CRUD simple.
 
 Úsalo cuando hay una gran asimetría entre lecturas y escrituras, cuando las lecturas necesitan formas muy distintas a la del modelo de escritura, o cuando ya usas event sourcing. De hecho, muchos diseños de esta etapa son CQRS sin nombrarlo: el timeline precalculado del news feed (sesión 22) es un modelo de lectura alimentado por eventos de publicación.
 

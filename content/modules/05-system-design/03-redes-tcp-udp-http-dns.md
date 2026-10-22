@@ -228,7 +228,7 @@ Esta segmentación limita el daño de una intrusión: si alguien compromete un s
 
 ### Modos de fallo de red que debes anticipar
 
-- **Particiones**: dos partes del sistema dejan de verse; cada una puede creer que la otra cayó (base de CAP, sesión 07).
+- **Particiones**: dos partes del sistema dejan de verse; cada una puede creer que la otra cayó (base de CAP; módulo 04, sesión 19).
 - **Pérdida y latencia variable**: un enlace congestionado no falla, solo se vuelve lento; sin timeouts, tus threads quedan esperando.
 - **DNS caído o envenenado**: sin resolución, nadie te encuentra aunque todo funcione.
 - **Agotamiento de puertos o conexiones**: abrir una conexión nueva por cada petición agota puertos efímeros y file descriptors bajo carga.

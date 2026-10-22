@@ -89,7 +89,7 @@ Los contadores no pueden vivir en una base de datos en disco (demasiado lenta po
 
 **Sincronización entre limitadores.** Con varios middlewares, si cada uno guarda sus propios contadores, un cliente cuyas peticiones se reparten entre ellos multiplica su límite por el número de nodos. Sticky sessions lo evitan pero no escalan ni toleran fallos. La solución estándar es un **almacén centralizado** (Redis) compartido por todos.
 
-**Rendimiento.** El rate limiter está en la ruta de **cada** petición: debe agregar menos de un par de milisegundos. Con varios data centers, cada uno tiene su propio Redis y los contadores se sincronizan de forma eventual; se acepta una pequeña imprecisión global a cambio de latencia local (PACELC, sesión 07). Los usuarios se enrutan al borde más cercano.
+**Rendimiento.** El rate limiter está en la ruta de **cada** petición: debe agregar menos de un par de milisegundos. Con varios data centers, cada uno tiene su propio Redis y los contadores se sincronizan de forma eventual; se acepta una pequeña imprecisión global a cambio de latencia local (más consistencia exigiría coordinar los centros en cada petición y pagar su latencia; módulo 04, sesión 19). Los usuarios se enrutan al borde más cercano.
 
 **Monitoreo.** Hay que medir si las reglas son efectivas: demasiadas peticiones legítimas rechazadas indica reglas muy estrictas; durante eventos como ventas flash, un token bucket con más capacidad de ráfaga puede ser mejor.
 
