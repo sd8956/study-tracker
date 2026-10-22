@@ -135,7 +135,7 @@ app.get("/metrics", async (_req, res) => {
 });
 ```
 
-En Kubernetes, **Prometheus** descubre los Pods (por anotaciones o por objetos de configuración), **raspa** periódicamente su endpoint `/metrics` y guarda las series. Grafana las visualiza. El **metrics server** de Kubernetes, en cambio, solo recoge CPU y memoria de Pods y nodos para cosas como `kubectl top` y el autoescalado (sesión 16).
+En Kubernetes, **Prometheus** descubre los Pods (por anotaciones o por objetos de configuración), **raspa** periódicamente su endpoint `/metrics` y guarda las series. Grafana las visualiza. El **metrics server** de Kubernetes, en cambio, solo recoge CPU y memoria de Pods y nodos para cosas como `kubectl top` y el autoescalado (sesión 12).
 
 ### 5. Distributed tracing
 

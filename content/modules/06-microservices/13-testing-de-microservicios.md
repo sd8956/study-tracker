@@ -187,7 +187,7 @@ Ningún entorno previo es idéntico a producción. A partir de cierto punto, añ
 - **Smoke tests** tras cada despliegue, antes de liberar tráfico.
 - **Canary releases** (sesión 12): comparar la versión nueva con la estable con tráfico real limitado.
 - **Usuarios sintéticos / semantic monitoring**: un proceso que, cada pocos minutos, ejecuta un recorrido real ("buscar un producto, añadirlo al carrito, pagar con una tarjeta de prueba") y alerta si falla. Ve la sesión 14.
-- **Chaos engineering**: inyectar fallos controlados para verificar la resiliencia (sesión 16).
+- **Chaos engineering**: inyectar fallos controlados para verificar la resiliencia (sesión 12).
 
 Para que sean seguras: marca las peticiones de prueba (cabecera o usuario especial) para que no cuenten en métricas de negocio, no generen cobros reales ni envíos, y puedan limpiarse.
 

@@ -1,16 +1,66 @@
 ---
-title: Prompt engineering defensivo — prompt injection, jailbreaks y extracción de información
+title: Prompt engineering — base y defensa contra prompt injection, jailbreaks y extracción de información
 kind: lesson
 hours: 2
-sources: AI Engineering (Chip Huyen), cap. 5, Defensive Prompt Engineering (pp. 462–493)
-links: OWASP Top 10 for LLM Applications | https://genai.owasp.org/llm-top-10/
+sources: AI Engineering (Chip Huyen), cap. 5, Introduction to Prompting y Prompt Engineering Best Practices (pp. 416–461) y Defensive Prompt Engineering (pp. 462–493)
+links: OWASP Top 10 for LLM Applications | https://genai.owasp.org/llm-top-10/ ; OpenAI prompt engineering guide | https://platform.openai.com/docs/guides/prompt-engineering
 ---
 
 ## Objetivo
 
-Identificar los tipos de ataques a aplicaciones con LLM (extracción de prompts, jailbreaking, prompt injection directa e indirecta, extracción de información), entender por qué funcionan y diseñar defensas en tres niveles (modelo, prompt y sistema), midiendo la seguridad con violation rate y false refusal rate.
+Repasar en una base breve lo esencial del prompt engineering (anatomía de un prompt, few-shot, system prompt y chat templates, contexto largo y buenas prácticas) e identificar los tipos de ataques a aplicaciones con LLM (extracción de prompts, jailbreaking, prompt injection directa e indirecta, extracción de información), entender por qué funcionan y diseñar defensas en tres niveles (modelo, prompt y sistema), midiendo la seguridad con violation rate y false refusal rate.
 
 ## Estudio
+
+### Base: lo esencial del prompt engineering
+
+La práctica guiada de prompting (la API de chat, buenas prácticas, estrategias avanzadas y prompts de negocio) la harás en el track de DataCamp del módulo 14, sesiones 01–05. Aquí te quedas con el mapa conceptual que necesitas para defender un prompt: no puedes proteger algo que no sabes cómo funciona.
+
+**Qué es.** Prompt engineering es diseñar la entrada que hace que el modelo produzca lo que quieres **sin cambiar sus pesos**. Es la técnica de adaptación más barata, así que la regla es exprimirla antes de pasar al finetuning (sesión 15). Para que sea ingeniería y no superstición necesita lo mismo que cualquier experimento: cambios sistemáticos, de uno en uno, medidos con un conjunto de evaluación fijo (sesiones 4–7 y 9).
+
+**Anatomía.** Un prompt suele tener tres partes: la **descripción de la tarea** (qué hacer, con qué rol y en qué formato), **ejemplos** de cómo hacerla y la **tarea concreta** (el texto a resumir, la pregunta). En este módulo, *prompt* es toda la entrada al modelo y *contexto* es la información que le das para resolver la tarea.
+
+**In-context learning.** Un modelo puede aprender una tarea a partir de ejemplos dentro del prompt, sin reentrenar. Sin ejemplos es *zero-shot*; con cinco, *5-shot*. Con modelos fuertes, la ganancia de los ejemplos en tareas generales es menor que antes, pero sigue siendo grande en dominios poco vistos. Los ejemplos compactos (`garbanzo --> comestible`) gastan menos tokens que los verbosos.
+
+**System prompt, user prompt y chat template.** Las APIs separan las instrucciones del desarrollador (system) de la entrada del usuario (user). Pero el modelo no ve mensajes: ve **un único texto** construido con su **chat template**, con tokens especiales que marcan cada rol. Una plantilla equivocada produce fallos silenciosos (respuestas razonables pero peores); si sirves un modelo abierto, imprime el prompt final y compruébalo. El system prompt suele pesar más porque va primero y porque muchos modelos se post-entrenan para priorizarlo: es la *jerarquía de instrucciones* que verás en la sección 6.
+
+**Contexto largo.** Que un documento quepa no significa que se use bien. Los modelos aprovechan mejor lo que está **al principio y al final** del contexto que lo que queda en medio (*lost in the middle*). Se mide con la prueba *needle in a haystack*: insertas un dato inventado en distintas posiciones de un texto largo y preguntas por él. Consecuencia: instrucciones importantes al principio (y repetidas brevemente al final), y nada de rellenar el contexto "por si acaso".
+
+**Prácticas que funcionan en casi todos los modelos:**
+
+| Práctica | En concreto |
+| --- | --- |
+| Instrucciones explícitas | Escala exacta ("entero de 1 a 5"), qué hacer ante la duda, corregir lo observado ("sin decimales") |
+| Persona | El mismo ensayo infantil recibe otra nota si el modelo actúa como maestra de primer grado |
+| Ejemplos | 1–3 ejemplos de los casos difíciles, en formato compacto |
+| Formato de salida | Claves JSON explícitas, sin preámbulos, y un **marcador de fin de entrada** (`Resumen JSON:`) para que el modelo sepa que toca responder |
+| Contexto suficiente | Darle los hechos reduce alucinaciones; pedir "responde solo con el contexto, cita el fragmento y di si no está" |
+| Descomposición | Una cadena de prompts simples: clasificar la intención y responder con un prompt específico para esa intención |
+| Tiempo para pensar | Chain-of-thought ("razona paso a paso"), con el razonamiento en un campo separado del resultado |
+| Iterar y versionar | Cada cambio responde a un fallo observado; los prompts viven fuera del código, versionados y con metadatos (modelo, temperature, esquema) |
+
+La descomposición merece un ejemplo, porque además ayuda a la seguridad: cada paso tiene un prompt pequeño y una salida que puedes validar.
+
+```ts
+const INTENT_PROMPT = "Clasifica la consulta en: billing, troubleshooting, account, other. Responde solo la etiqueta.";
+const HANDLERS: Record<string, string> = {
+  billing: "Respondes dudas de facturación con tono claro; nunca prometas reembolsos.",
+  troubleshooting: "Ayudas a resolver problemas técnicos paso a paso; si no se resuelve, ofrece derivar a soporte.",
+  account: "Ayudas con la gestión de la cuenta; nunca pidas contraseñas.",
+  other: "Responde amablemente y ofrece derivar a una persona.",
+};
+
+export async function support(query: string): Promise<string> {
+  const intent = (await chat([{ role: "system", content: INTENT_PROMPT }, { role: "user", content: query }], 0))
+    .trim().toLowerCase();
+  const system = HANDLERS[intent] ?? HANDLERS.other; // salida inesperada -> ruta segura
+  return chat([{ role: "system", content: system }, { role: "user", content: query }], 0.3);
+}
+```
+
+Beneficios: puedes monitorear y depurar cada paso, usar un modelo barato para clasificar y uno fuerte para responder, y ejecutar en paralelo los pasos independientes. Costos: más llamadas y algo más de latencia hasta la respuesta final.
+
+Con esta base clara, el resto de la sesión responde la pregunta incómoda: ¿qué pasa cuando quien escribe la entrada **quiere** que el modelo se equivoque?
 
 ### 1. Tu aplicación también la usan atacantes
 
@@ -31,7 +81,7 @@ Y los riesgos van desde lo molesto hasta lo grave:
 - **Interrupción o subversión del servicio**: dar acceso a quien no debe, poner nota alta a un trabajo malo, rechazar un crédito que debía aprobarse, o una instrucción que hace que el sistema se niegue a todo.
 - **Riesgo de marca**: frases ofensivas al lado de tu logo. Ha habido casos muy sonados de buscadores con IA recomendando cosas absurdas y chatbots que aprendieron a ser ofensivos en horas.
 
-Cuanto más capaces y conectados están los modelos, más graves son estos riesgos. Y hay una paradoja de fondo: **los ataques funcionan precisamente porque los modelos están entrenados para seguir instrucciones**. Cuanto mejor siguen instrucciones, mejor siguen las maliciosas. Además, como viste en la sesión 8, al final todo (system prompt, mensaje del usuario, documentos recuperados) se concatena en un solo texto y al modelo le cuesta distinguir quién manda.
+Cuanto más capaces y conectados están los modelos, más graves son estos riesgos. Y hay una paradoja de fondo: **los ataques funcionan precisamente porque los modelos están entrenados para seguir instrucciones**. Cuanto mejor siguen instrucciones, mejor siguen las maliciosas. Además, como viste en la base de esta sesión, al final todo (system prompt, mensaje del usuario, documentos recuperados) se concatena en un solo texto y al modelo le cuesta distinguir quién manda.
 
 ### 2. Prompts propietarios y reverse prompt engineering
 
@@ -79,7 +129,7 @@ Modelo vulnerable: forward(0, atacante) forward(1, atacante) ...
 
 Lo mismo aplica a RAG: un documento indexado o un registro de base de datos puede contener instrucciones. Un nombre de usuario con una orden en lenguaje natural puede terminar dentro de un prompt que genera SQL. Las bases de datos saben sanear SQL, pero **no hay un saneador fiable para el lenguaje natural**.
 
-Para tus proyectos esto importa directamente: el juez de la sesión 9 lee respuestas escritas por otros, y el RAG de la sesión 13 lee archivos. **Todo texto que no escribiste tú es entrada no confiable.**
+Para tus proyectos esto importa directamente: el juez de la sesión 9 lee respuestas escritas por otros, y un RAG (sesión 11) lee archivos que no escribiste. **Todo texto que no escribiste tú es entrada no confiable.**
 
 ### 4. Extracción de información
 
@@ -219,6 +269,11 @@ Errores comunes: confiar solo en "por favor no hagas X" en el prompt; dar a un a
 
 ## Conceptos clave
 
+- **Prompt engineering**: diseñar instrucciones y contexto para obtener el comportamiento deseado sin cambiar pesos.
+- **In-context learning (zero-shot / few-shot)**: aprender una tarea a partir de instrucciones y, opcionalmente, ejemplos dentro del prompt.
+- **Chat template**: formato con tokens especiales con que el modelo combina system, user y assistant en un único texto.
+- **Lost in the middle**: los modelos aprovechan peor la información situada en el centro de un contexto largo.
+- **Prompt decomposition**: dividir una tarea en una cadena de prompts más simples.
 - **Prompt extraction / reverse prompt engineering**: obtener o deducir el system prompt de una aplicación.
 - **Jailbreaking**: lograr que el modelo se salte sus protecciones de seguridad.
 - **Prompt injection**: introducir instrucciones maliciosas en la entrada para alterar el comportamiento de la app.
@@ -232,19 +287,25 @@ Errores comunes: confiar solo en "por favor no hagas X" en el prompt; dar a un a
 
 ## Preguntas de repaso
 
-1. ¿Por qué los ataques de prompt funcionan mejor a medida que los modelos mejoran?
+1. ¿Qué es el in-context learning y cuándo siguen aportando mucho los ejemplos few-shot?
+   R: Es la capacidad del modelo de realizar una tarea a partir de instrucciones y ejemplos incluidos en el prompt, sin actualizar pesos. Con modelos fuertes los ejemplos aportan menos en tareas generales, pero siguen ayudando mucho en dominios poco vistos o cuando el estilo o el formato esperado es ambiguo.
+2. ¿Por qué un chat template incorrecto es peligroso y cómo lo detectas?
+   R: Porque produce fallos silenciosos: el modelo sigue respondiendo algo razonable pero con peor calidad, sin errores visibles. Se detecta imprimiendo el prompt final que recibe el modelo y comparándolo con la plantilla documentada, sobre todo al servir modelos abiertos o usar herramientas de terceros.
+3. Da tres beneficios y dos costos de dividir una tarea en una cadena de prompts.
+   R: Beneficios: se pueden monitorear y depurar los pasos por separado, ejecutar en paralelo los independientes y usar modelos más baratos en pasos simples. Costos: más llamadas al modelo y más latencia antes de la respuesta final.
+4. ¿Por qué los ataques de prompt funcionan mejor a medida que los modelos mejoran?
    R: Porque los modelos se entrenan para seguir instrucciones y, cuanto mejor lo hacen, mejor siguen también las maliciosas; además, todas las instrucciones terminan concatenadas en un solo texto, lo que dificulta distinguir las legítimas de las inyectadas.
-2. ¿En qué se diferencia la prompt injection indirecta de la directa y por qué es más peligrosa?
+5. ¿En qué se diferencia la prompt injection indirecta de la directa y por qué es más peligrosa?
    R: En la directa el atacante escribe la instrucción en su propia entrada; en la indirecta la esconde en datos que el sistema consulta (correos, páginas web, documentos, registros). Es más peligrosa porque puede afectar a cualquier usuario cuyo asistente lea ese contenido y porque el lenguaje natural no se puede sanear de forma fiable como el SQL.
-3. ¿Por qué debes escribir tu system prompt asumiendo que será público?
+6. ¿Por qué debes escribir tu system prompt asumiendo que será público?
    R: Porque puede extraerse con técnicas de reverse prompt engineering y también puede filtrarse el contexto; por tanto no debe contener secretos ni datos sensibles, y la seguridad no puede depender de que el prompt permanezca oculto.
-4. ¿Por qué hay que medir a la vez violation rate y false refusal rate?
+7. ¿Por qué hay que medir a la vez violation rate y false refusal rate?
    R: Porque se pueden mejorar a costa la una de la otra: un sistema que rechaza todo tiene violation rate cero pero es inútil. Medir ambas asegura que el sistema es seguro sin volverse excesivamente cauteloso.
-5. Nombra tres defensas de nivel sistema para un agente que puede consultar una base de datos.
+8. Nombra tres defensas de nivel sistema para un agente que puede consultar una base de datos.
    R: Usar una conexión de solo lectura (mínimo privilegio), exigir aprobación humana para cualquier consulta que modifique datos y registrar y detectar patrones de uso anómalos; además, filtrar las salidas para no exponer datos personales.
-6. ¿Qué es la jerarquía de instrucciones y por qué ayuda contra la inyección indirecta?
+9. ¿Qué es la jerarquía de instrucciones y por qué ayuda contra la inyección indirecta?
    R: Es entrenar al modelo para priorizar, ante conflictos, el system prompt sobre el usuario, este sobre las salidas del modelo y estas sobre las salidas de herramientas. Como el contenido inyectado llega a través de herramientas, queda con la menor prioridad y el modelo tiende a ignorarlo.
-7. ¿Qué es una petición límite y cómo debería responderla un sistema bien diseñado?
+10. ¿Qué es una petición límite y cómo debería responderla un sistema bien diseñado?
    R: Es una petición que puede tener intención legítima o dañina, como preguntar cómo entrar a una habitación cerrada. En lugar de negarse por completo o dar instrucciones peligrosas, el sistema debería ofrecer una alternativa segura y útil, como sugerir llamar a un cerrajero.
 
 ## Ejercicio

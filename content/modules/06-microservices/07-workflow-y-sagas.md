@@ -92,7 +92,7 @@ Cuando un paso falla, tienes dos estrategias:
 
 Puedes mezclar ambas: algunos fallos se compensan y otros se reintentan.
 
-Un punto fundamental: **una saga maneja fallos de negocio, no fallos técnicos**. "El cliente no tiene fondos" o "el producto no está en el estante" son fallos de negocio que la saga debe contemplar. "El servicio de pagos devolvió 500" o "timeout" son fallos técnicos que se manejan con reintentos, idempotencia y resiliencia (sesión 16). La saga asume que sus componentes, con esas protecciones, son fiables.
+Un punto fundamental: **una saga maneja fallos de negocio, no fallos técnicos**. "El cliente no tiene fondos" o "el producto no está en el estante" son fallos de negocio que la saga debe contemplar. "El servicio de pagos devolvió 500" o "timeout" son fallos técnicos que se manejan con reintentos, idempotencia y resiliencia (módulo 05, sesión 12). La saga asume que sus componentes, con esas protecciones, son fiables.
 
 ### 5. Transacciones compensatorias
 
@@ -228,7 +228,7 @@ Las sagas no te dan aislamiento: otros procesos pueden ver estados intermedios (
 
 Ventajas de las sagas: no bloquean recursos entre pasos, toleran procesos largos, hacen explícito el proceso de negocio. Su costo: más diseño, compensaciones que pensar y consistencia eventual.
 
-Y un recordatorio del libro de Sayfan: en el mundo distribuido aparece el **teorema CAP** (lo verás de nuevo en la sesión 16): ante una partición de red, tienes que elegir entre consistencia y disponibilidad. Las sagas son, en buena medida, una elección consciente de disponibilidad con consistencia eventual.
+Y un recordatorio del libro de Sayfan: en el mundo distribuido aparece el **teorema CAP** (ya lo viste en los módulos 04 y 05): ante una partición de red, tienes que elegir entre consistencia y disponibilidad. Las sagas son, en buena medida, una elección consciente de disponibilidad con consistencia eventual.
 
 ### 10.1 Ejemplo trabajado: diseñar la saga de una suscripción
 
