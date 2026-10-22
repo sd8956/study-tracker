@@ -7,9 +7,9 @@ Plan de estudio personal que corre **en tu equipo**. Abres la web y ves qué toc
 3. **Sesión técnica**: la siguiente sesión de la ruta, con guía de estudio, preguntas de repaso,
    ejercicio, explicación Feynman y tutor.
 
-La ruta sigue `content/plan-order.txt`: los módulos de libros y repos se intercalan con los 6 bloques
-de **Cloud Security** (139 sesiones); después vienen DataCamp (con el libro de AI Engineering justo antes de
-los tracks de IA) y Scrimba. Lunes a viernes 2 h de ruta, sábado 3 h, domingo descanso. Las sesiones
+La ruta sigue `content/plan-order.txt`: primero los módulos de libros y repos, después DataCamp (con el
+libro de AI Engineering justo antes de los tracks de IA) y Scrimba, y al final los 6 bloques de
+**Cloud Security** (139 sesiones). Lunes a viernes 2 h de ruta, sábado 3 h, domingo descanso. Las sesiones
 son secuenciales y se reparten por horas: una sesión de 3 h puede ocupar dos días de semana
 ("Avancé X h hoy" en Hoy) y la siguiente empieza en las horas que quedan. Cada sesión es un "Día N" de la ruta (sin fechas previstas): si un día no estudias, el siguiente número espera.
 
@@ -54,7 +54,7 @@ opciones y te autoevalúas con las respuestas modelo.
 ## Contenido
 
 ```
-content/agenda.md                 Ruta Cloud Security (6 bloques, intercalados según plan-order.txt)
+content/agenda.md                 Ruta Cloud Security (6 bloques, al final según plan-order.txt)
 content/plan-order.txt            Orden de estudio: un módulo o bloque cloud-bN por línea
 content/modules/NN-tema/          Un módulo: module.md + una sesión por archivo NN-slug.md
 docs/CONTENT-FORMAT.md            Contrato del formato (secciones, preguntas, links)
